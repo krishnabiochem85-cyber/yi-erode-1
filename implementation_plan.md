@@ -15,11 +15,17 @@
 > - **(B)** Create a new Supabase project dedicated to this platform?
 > Creating a new project on the free plan costs **$0/month**.
 
+> [!IMPORTANT]
+> **Authentication Strategy**: We are enabling **Google Authentication** via Supabase.
+> To proceed, you will need to manually configure Google Cloud Console and the Supabase Dashboard. See the new Google Auth Setup section below.
+
 > [!WARNING]
-> **Authentication Strategy**: Who will use this platform?
-> 1. **Admin-only** — Only YI Erode Chapter team & JKKN coordinators log in. Schools fill forms via public links.
-> 2. **Multi-role** — Admins, School Coordinators, and Mentors each have login accounts with different permissions.
-> Please confirm which model you prefer.
+> **Who will use this platform?** We are implementing a **Role Allocation** system with three primary roles:
+> 1. **`admin`**: YI Chapter Leaders (Full Access, manual override capabilities).
+> 2. **`school_coordinator`**: School POC (Can view schedules and fill assessments).
+> 3. **`mentor`**: JKKN Institution volunteers (Can view assigned sessions, submit feedback).
+> 
+> *Question for you:* Should *anyone* signing in with Google automatically become a `mentor` initially until an `admin` upgrades them, OR should new Google sign-ins have *no access* until an admin explicitly creates their role?
 
 > [!IMPORTANT]
 > **The 10 Assessment Questions**: Could you share the actual 10 questions for the Module Planning Assessment? I'll build the form around your exact questions. For now, I'll design the schema to support 10 configurable questions.
@@ -69,14 +75,44 @@ graph TD
 
 ---
 
-## Proposed Features — 7 Core Modules
+## Google Auth Setup Instructions
 
-### Module 1: Dashboard (Home)
-- Overview cards: Total schools registered, sessions completed, upcoming sessions, active mentors
-- Quick stats: Schools by category (A1/A2/A3), student behavioral distribution (B1/B2/B3)
-- 3×3 heatmap showing module assignment distribution
-- Recent activity feed
-- The **Six Pillars** visual display
+> [!IMPORTANT]
+> To enable Google Authentication, you must manually complete these steps in your browser before I can finish the code implementation.
+
+### 1. Google Cloud Console
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a new project (e.g., `YI Erode Shield Auth`).
+3. Go to **APIs & Services** > **OAuth consent screen**.
+   - Choose **External** and fill in the required App Information (App name, User support email, Developer contact).
+4. Go to **Credentials** > **Create Credentials** > **OAuth client ID**.
+   - Application type: **Web application**.
+   - **Authorized JavaScript origins**: `http://localhost:3000` (for local dev) and your production URL.
+   - **Authorized redirect URIs**: `https://rqoaoqmbnwjyseluqgyo.supabase.co/auth/v1/callback`
+5. Save and copy your **Client ID** and **Client Secret**.
+
+### 2. Supabase Dashboard
+1. Go to your [Supabase Dashboard](https://supabase.com/dashboard/project/rqoaoqmbnwjyseluqgyo/auth/providers).
+2. Go to **Authentication** > **Providers** > **Google**.
+3. Enable the Google provider.
+4. Paste the **Client ID** and **Client Secret** you got from Google Cloud.
+5. Save the configuration.
+
+Once you have completed these manual steps, let me know, and I will proceed with installing `@supabase/ssr` and building the Google Login UI!
+
+---
+
+## Proposed Features — Route Segregation
+
+### Module 1.A: Admin Dashboard (Ultimate Control)
+- Overview cards: Total schools registered, sessions completed, active mentors
+- Access to Role Allocation and Global Tables
+- The **Six Pillars** metrics aggregation
+
+### Module 1.B: Normal User Dashboard
+- **If Unassigned**: Displays a beautiful "Waiting for Admin Approval" screen informing them that Role Allocation is pending.
+- **If Mentor**: Shows *My Upcoming Sessions* and quick action to write feedback.
+- **If Coordinator**: Shows *My School's Schedule* and *Assessment forms*.
 
 ### Module 2: School Management
 - Register new schools (name, district, board type, contact person, phone, email, address)
@@ -136,6 +172,16 @@ graph TD
 
 ```mermaid
 erDiagram
+    USERS ||--|| PROFILES : "has"
+    PROFILES {
+        uuid id PK "matches auth.users.id"
+        text email
+        text full_name
+        text avatar_url
+        text role "enum: admin, school_coordinator, mentor, unassigned"
+        timestamp created_at
+    }
+
     SCHOOLS ||--o{ ASSESSMENTS : "has"
     SCHOOLS ||--o{ SESSIONS : "hosts"
     ASSESSMENTS ||--|| MODULE_ASSIGNMENTS : "determines"
@@ -143,6 +189,7 @@ erDiagram
     SESSIONS ||--o{ FEEDBACK : "receives"
     MENTORS ||--o{ SESSION_MENTORS : "participates"
     SESSIONS ||--o{ SESSION_MENTORS : "includes"
+
 
     SCHOOLS {
         uuid id PK
@@ -244,7 +291,42 @@ erDiagram
 
 ---
 
-## UI Design Direction
+## Route Segregation & RBAC Architecture
+
+To securely separate "Ultimate Control" from normal operations, we will employ **Next.js Route Groups**:
+
+1. **The Admin Interface** (`/admin/*`)
+   - Fully isolated layout and sidebar.
+   - Requires `admin` role explicitly.
+   - Features: Global Dashboard, Role Allocation (`/admin/roles`), School overrides, Full Module assignment.
+
+2. **The Normal User Interface** (`/dashboard` or `/`)
+   - Normal layout.
+   - Accessible by `mentor`, `school_coordinator`, or `unassigned`.
+   - Features:
+     - `unassigned`: A waiting page explaining they need role approval.
+     - `mentor`: Sees only assigned sessions and feedback forms.
+     - `school_coordinator`: Sees only their school's status and schedule.
+
+---
+
+## Project Structure (Updated)
+
+```text
+d:\yi-erode-shield/
+├── app/
+│   ├── (auth)/
+│   │   └── login/             # Public Login
+│   ├── admin/                 # ADMIN ULTIMATE CONTROL
+│   │   ├── layout.js          # Admin-only Sidebar & Protection
+│   │   ├── page.js            # Admin Global Dashboard
+│   │   ├── roles/             # Role Allocation UI
+│   │   └── schools/           # Global School Management
+│   ├── (user)/                # NORMAL USERS
+│   │   ├── layout.js          # Normal user limited sidebar
+│   │   └── page.js            # Normal personalized dashboard
+│   ├── globals.css
+```
 
 - **Theme**: Deep dark mode with gradient accents (indigo → violet → rose)
 - **Typography**: Inter (Google Fonts)

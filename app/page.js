@@ -1,154 +1,114 @@
-"use client";
+import { getUserRole } from '@/utils/roles';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/server';
 
-import Link from "next/link";
+export default async function NormalUserDashboard() {
+  const role = await getUserRole();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-export default function Dashboard() {
+  // 1. Not logged in -> Login page
+  if (!role || !user) {
+    redirect('/login');
+  }
+
+  // 2. Admin -> Redirect to ultimate control panel
+  if (role === 'admin') {
+    redirect('/admin');
+  }
+
+  // 3. Unassigned User -> Show waiting page
+  if (role === 'unassigned') {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem',
+        backgroundColor: '#0f0f1a',
+        color: '#fff',
+        fontFamily: 'system-ui, sans-serif'
+      }}>
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          padding: '3rem',
+          borderRadius: '24px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)',
+          textAlign: 'center',
+          maxWidth: '500px'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', color: 'transparent' }}>
+            Account Under Review
+          </h1>
+          <p style={{ color: '#a1a1aa', lineHeight: '1.6', marginBottom: '2rem' }}>
+            Your account has been successfully created with your Google login. However, for security purposes, a Project Shield administrator must manually verify your identity and allocate a specific role before you can access the platform.
+          </p>
+          <div style={{ fontSize: '0.875rem', color: '#71717a' }}>
+            Account ID: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>{user?.email}</code>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 4. Mentor / School Coordinator -> Show Normal Portal
   return (
-    <div>
-      <div className="page-header">
-        <div className="page-header-row">
-          <div>
-            <h1 className="page-title">Dashboard</h1>
-            <p className="page-subtitle">Welcome to Project Shield Command Center</p>
-          </div>
-          <button className="btn btn-primary">
-            <span>+</span> New Assessment
-          </button>
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#0f0f1a',
+      color: '#fff',
+      fontFamily: 'system-ui, sans-serif'
+    }}>
+      {/* Normal User Simple Navbar */}
+      <nav style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '1rem 2rem',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        background: 'rgba(255,255,255,0.02)'
+      }}>
+        <div style={{ fontWeight: 'bold', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <span>🛡️</span> Project Shield Portal
         </div>
-      </div>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.875rem', color: '#a1a1aa', textTransform: 'capitalize' }}>Role: {role}</span>
+          <form action="/auth/signout" method="POST">
+             {/* Just redirect out for now instead of complex server actions */}
+          </form>
+        </div>
+      </nav>
 
-      <div className="stats-grid">
-        <div className="stat-card indigo">
-          <div className="stat-card-header">
-            <div className="stat-card-icon">🏫</div>
-            <div className="stat-card-badge up">+12%</div>
-          </div>
-          <div className="stat-card-value">124</div>
-          <div className="stat-card-label">Total Schools Assessed</div>
-        </div>
-        <div className="stat-card purple">
-          <div className="stat-card-header">
-            <div className="stat-card-icon">🎯</div>
-            <div className="stat-card-badge up">+5%</div>
-          </div>
-          <div className="stat-card-value">86</div>
-          <div className="stat-card-label">Active Modules</div>
-        </div>
-        <div className="stat-card pink">
-          <div className="stat-card-header">
-            <div className="stat-card-icon">👥</div>
-            <div className="stat-card-badge">New</div>
-          </div>
-          <div className="stat-card-value">42</div>
-          <div className="stat-card-label">Registered Mentors</div>
-        </div>
-        <div className="stat-card emerald">
-          <div className="stat-card-header">
-            <div className="stat-card-icon">✅</div>
-            <div className="stat-card-badge up">+18%</div>
-          </div>
-          <div className="stat-card-value">156</div>
-          <div className="stat-card-label">Sessions Completed</div>
-        </div>
-      </div>
+      {/* Normal Portal Content */}
+      <main style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Welcome to the Portal</h1>
+        <p style={{ color: '#a1a1aa', marginBottom: '2rem' }}>You are logged in via standard access.</p>
 
-      <div className="content-grid">
-        {/* Module Matrix Heatmap */}
-        <div className="card">
-          <div className="section-header">
-            <h2 className="section-title">Module Assignment Distribution</h2>
-            <div className="section-action">View Full Matrix</div>
-          </div>
-          <div className="matrix-grid">
-            {["A1-B1", "A2-B1", "A3-B1", "A1-B2", "A2-B2", "A3-B2", "A1-B3", "A2-B3", "A3-B3"].map((code, index) => {
-              const counts = [12, 5, 2, 8, 24, 15, 3, 18, 37];
-              // Background intensity for visual effect based on counts
-              const intensity = counts[index] / 40; 
-              return (
-                <div 
-                  key={code} 
-                  className="matrix-cell" 
-                  style={{ backgroundColor: `rgba(99, 102, 241, ${Math.max(0.05, intensity)})` }}
-                >
-                  <div className="matrix-cell-code">{code}</div>
-                  <div className="matrix-cell-count">{counts[index]}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1.5rem'
+        }}>
+          {/* Custom widgets based on role */}
+          {role === 'mentor' && (
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
+               <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>My Assigned Sessions</h2>
+               <p style={{ color: '#71717a' }}>You have no upcoming sessions assigned.</p>
+            </div>
+          )}
 
-        {/* Recent Activity */}
-        <div className="card">
-          <div className="section-header">
-            <h2 className="section-title">Recent Activity</h2>
-            <div className="section-action">View All</div>
-          </div>
-          <div className="activity-list">
-            <div className="activity-item">
-              <div className="activity-dot green"></div>
-              <div>
-                <div className="activity-text"><strong>Govt. Boys Hr Sec School</strong> completed assessment</div>
-                <div className="activity-time">2 hours ago</div>
-              </div>
+          {role === 'school_coordinator' && (
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
+               <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>My School Dashboard</h2>
+               <button style={{ background: '#6366f1', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>Fill Initial Assessment</button>
             </div>
-            <div className="activity-item">
-              <div className="activity-dot purple"></div>
-              <div>
-                <div className="activity-text">Module <strong>A2-B3</strong> assigned to <strong>Bharathi Vidya Bhavan</strong></div>
-                <div className="activity-time">5 hours ago</div>
-              </div>
-            </div>
-            <div className="activity-item">
-              <div className="activity-dot pink"></div>
-              <div>
-                <div className="activity-text">Mentor <strong>Dr. Anitha</strong> requested schedule change</div>
-                <div className="activity-time">Yesterday</div>
-              </div>
-            </div>
-             <div className="activity-item">
-              <div className="activity-dot blue"></div>
-              <div>
-                <div className="activity-text">Session completed successfully at <strong>St. Mary's Matriculation</strong></div>
-                <div className="activity-time">Yesterday</div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-
-        {/* Six Pillars */}
-        <div className="card content-grid-full">
-          <div className="section-header">
-            <h2 className="section-title">The Six Pillars of Project Shield</h2>
-          </div>
-          <div className="pillars-grid">
-            <div className="pillar-item">
-              <div className="pillar-emoji">🚫</div>
-              <div className="pillar-name">Saying No</div>
-            </div>
-            <div className="pillar-item">
-              <div className="pillar-emoji">🛡️</div>
-              <div className="pillar-name">Boundaries</div>
-            </div>
-            <div className="pillar-item">
-              <div className="pillar-emoji">🤫</div>
-              <div className="pillar-name">Confidential Sharing</div>
-            </div>
-            <div className="pillar-item">
-              <div className="pillar-emoji">❤️‍🩹</div>
-              <div className="pillar-name">Suicide Awareness</div>
-            </div>
-            <div className="pillar-item">
-              <div className="pillar-emoji">📱</div>
-              <div className="pillar-name">Social Media</div>
-            </div>
-            <div className="pillar-item">
-              <div className="pillar-emoji">💊</div>
-              <div className="pillar-name">Substance Abuse</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
