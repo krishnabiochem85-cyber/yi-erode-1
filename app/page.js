@@ -9,19 +9,10 @@ export default async function RootPage({ searchParams }) {
   const params = await searchParams;
   const code = params?.code;
 
-  // If OAuth returns a ?code= to the root, exchange it for a session first
+  // If OAuth incorrectly returns a ?code= to the root, bounce it to the callback route
+  // because Server Components cannot set cookies, but Route Handlers can.
   if (code) {
-    try {
-      const supabase = await createClient();
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
-      if (error) {
-        console.error('Error exchanging code for session:', error.message);
-        redirect('/login');
-      }
-    } catch (e) {
-      console.error('Failed to exchange code:', e);
-      redirect('/login');
-    }
+    redirect(`/auth/callback?code=${code}`);
   }
 
   const { role, user } = await getServerRole();
