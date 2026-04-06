@@ -19,22 +19,12 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const getURL = () => {
-    let url =
-      process?.env?.NEXT_PUBLIC_SITE_URL ??
-      process?.env?.NEXT_PUBLIC_VERCEL_URL ??
-      'http://localhost:3000/';
-    url = url.startsWith('http') ? url : `https://${url}`;
-    url = url.endsWith('/') ? url : `${url}/`;
-    return url;
-  };
-
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${getURL()}auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
     if (error) {
