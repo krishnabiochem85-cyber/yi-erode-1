@@ -2,15 +2,11 @@ import Sidebar from "@/components/Sidebar";
 import { getServerRole } from '@/utils/auth-server';
 import { redirect } from 'next/navigation';
 
-export default async function AdminLayout({ children }) {
+export default async function SchoolDashboardLayout({ children }) {
   const { role } = await getServerRole();
   
   if (!role) {
     redirect('/login');
-  }
-  
-  if (role !== 'admin') {
-    redirect('/');
   }
 
   return (
