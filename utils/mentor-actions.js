@@ -100,3 +100,38 @@ const fallbackFeedback = [
   { school: "JKKN Public School", module: "A2-B1", date: "2026-03-25", time: "02:00 PM", rating: 4.8, comments: "Amazing session! I learned a lot about saying no.", feedbackSubmitted: true },
   { school: "Govt. Girls Hr Sec", module: "A2-B3", date: "2026-03-20", time: "09:30 AM", rating: null, comments: null, feedbackSubmitted: false },
 ];
+
+export async function createSession(formData) {
+  const title = formData.get("title");
+  const description = formData.get("description");
+  const scheduled_at = formData.get("scheduled_at");
+  const mentor_id = formData.get("mentor_id");
+
+  try {
+    const supabase = await createClient();
+    const { data: session, error } = await supabase
+      .from("sessions")
+      .insert([{ 
+        title, 
+        description, 
+        session_date: scheduled_at.split('T')[0], 
+        start_time: scheduled_at.split('T')[1] 
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    if (mentor_id) {
+      await supabase
+        .from("session_mentors")
+        .insert([{ session_id: session.id, mentor_id }]);
+    }
+
+    // Assume revalidate is needed on mentor dashboard
+    return { success: true, session };
+  } catch (err) {
+    console.error("Create session error:", err);
+    return { error: err.message || "Failed to create session." };
+  }
+}

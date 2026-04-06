@@ -1,4 +1,6 @@
 import "./globals.css";
+import { ThemeProvider } from "./ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const metadata = {
   title: "Project Shield — YI Erode Chapter",
@@ -9,7 +11,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        {children}
+        <ThemeProvider>
+          {children}
+          <ThemeToggle />
+        </ThemeProvider>
       </body>
     </html>
   );

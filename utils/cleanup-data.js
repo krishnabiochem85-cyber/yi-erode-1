@@ -3,7 +3,7 @@
 // Each function deletes rows where the combination of key columns is duplicated,
 // keeping the row with the smallest `id` (or earliest timestamp).
 
-require('dotenv').config();
+require('dotenv').config({ path: '.env.local' });
 const { createClient } = require("@supabase/supabase-js");
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -14,25 +14,40 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.
  * @returns {Promise<number>} Number of rows deleted.
  */
 async function deleteDuplicates(table, uniqueCols) {
-  const cols = uniqueCols.join(', ');
-  const { data, error } = await supabase.rpc('delete_duplicates', {
-    table_name: table,
-    unique_columns: cols,
-  });
-  if (error) {
-    console.error(`Error cleaning ${table}:`, error);
+  const { data, error } = await supabase.from(table).select('*');
+  if (error || !data) {
+    if (error && error.code !== '42P01') console.error(`Error fetching ${table}:`, error); // Ignore table not found
     return 0;
   }
-  return data?.deleted || 0;
+  
+  const seen = {};
+  const idsToDelete = [];
+  
+  for (const row of data) {
+    const key = uniqueCols.map(col => row[col]).join('|');
+    if (seen[key]) {
+      // It's a duplicate, delete the newer one (assuming higher ID or later row)
+      idsToDelete.push(row.id);
+    } else {
+      seen[key] = row;
+    }
+  }
+
+  if (idsToDelete.length > 0) {
+    const { error: deleteError } = await supabase.from(table).delete().in('id', idsToDelete);
+    if (deleteError) {
+      console.error(`Error deleting duplicates in ${table}:`, deleteError);
+      return 0;
+    }
+  }
+  return idsToDelete.length;
 }
 
-export async function cleanupAll() {
+async function cleanupAll() {
   const tables = [
     { name: "assessment_results", cols: ["school_id", "assessment_id"] },
-    { name: "schedule_requests", cols: ["school_id", "requested_at"] },
-    { name: "mentor_availability", cols: ["mentor_id", "date"] },
-    { name: "sessions", cols: ["title", "scheduled_at"] },
     { name: "mentors", cols: ["email"] },
+    { name: "sessions", cols: ["title", "scheduled_at"] }
   ];
 
   const summary = {};
@@ -43,7 +58,7 @@ export async function cleanupAll() {
   return summary;
 }
 
-export { cleanupAll };
+module.exports = { cleanupAll };
 
 // If this file is executed directly (node utils/cleanup-data.js), run the cleanup.
 if (require.main === module) {
