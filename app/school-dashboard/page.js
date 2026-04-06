@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getDevUser } from "@/utils/auth";
+import Link from 'next/link';
 
 const schoolInfo = {
   name: "Bharathi Vidya Bhavan",
@@ -186,8 +187,23 @@ export default function SchoolDashboard() {
             <h2 className="section-title">⚡ Quick Actions</h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <Link href="/school-dashboard/assessment" style={{ textDecoration: 'none' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '14px',
+                padding: '16px', borderRadius: 'var(--radius-md)',
+                background: 'linear-gradient(135deg, var(--primary-glow) 0%, rgba(99, 102, 241, 0.05) 100%)', 
+                border: '1px solid var(--primary-400)',
+                cursor: 'pointer', textAlign: 'left', width: '100%',
+                transition: 'all 0.2s', color: 'inherit'
+              }}>
+                <span style={{ fontSize: '24px' }}>📝</span>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '14px', color: 'var(--primary-400)', marginBottom: '2px' }}>Take Assessment & Schedule</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Complete questionnaire to receive Module Matrix</div>
+                </div>
+              </div>
+            </Link>
             {[
-              { icon: '📝', label: 'View Assessment Results', desc: 'See your school\'s assessment breakdown', color: 'var(--primary-400)' },
               { icon: '📊', label: 'Student Feedback Report', desc: 'View aggregated student responses', color: 'var(--success-400)' },
               { icon: '📅', label: 'Request Schedule Change', desc: 'Submit a scheduling request', color: 'var(--warning-400)' },
               { icon: '💬', label: 'Contact Admin', desc: 'Send a message to the admin team', color: 'var(--accent-400)' },
