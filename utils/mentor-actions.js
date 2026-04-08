@@ -177,3 +177,36 @@ export async function getMentorFeedbackStats(mentorId) {
     ) / 6)
   }));
 }
+
+/**
+ * Create a new session (Mentor or Admin)
+ */
+export async function createSession(formData) {
+  const supabase = await createClient();
+  const auth = await getServerRole();
+
+  if (!auth.user) return { error: "Unauthorized" };
+
+  const sessionData = {
+    title: formData.get('title'),
+    description: formData.get('description'),
+    session_date: formData.get('scheduled_at'),
+    created_by: auth.user.id,
+    session_type: 'awareness' // Default
+  };
+
+  const { data, error } = await supabase
+    .from('sessions')
+    .insert([sessionData])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating session:', error.message);
+    return { error: error.message };
+  }
+
+  revalidatePath('/mentor-dashboard');
+  revalidatePath('/admin-dashboard');
+  return { success: true, data };
+}

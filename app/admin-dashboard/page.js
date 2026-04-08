@@ -105,6 +105,13 @@ export default function AdminOverviewPage() {
             <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>Assign verified JKKN mentors</p>
           </div>
         </Link>
+        <Link href="/admin-dashboard/roles" className="card action-card" style={{ display: "flex", alignItems: "center", gap: "16px", textDecoration: "none" }}>
+          <div className="action-icon">🔑</div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '16px' }}>Manage User Roles</h3>
+            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>Assign roles and access levels</p>
+          </div>
+        </Link>
         <Link href="/modules" className="card action-card" style={{ display: "flex", alignItems: "center", gap: "16px", textDecoration: "none" }}>
           <div className="action-icon">🧩</div>
           <div>

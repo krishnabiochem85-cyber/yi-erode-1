@@ -1,12 +1,11 @@
 /**
  * Server-side auth utility.
- * Checks Supabase auth first, then falls back to dev cookie.
  */
-import { cookies } from 'next/headers';
 
 const ADMIN_EMAIL = 'krishnaveni_a@jkkn.ac.in';
 
 export async function getServerRole() {
+  const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
 
   // 1. Check Supabase auth session
