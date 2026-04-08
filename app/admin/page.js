@@ -120,6 +120,45 @@ export default function AdminDashboard() {
       </div>
 
       <div className="content-grid">
+        {/* About Program */}
+        <div className="card content-grid-full" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 0, alignItems: 'stretch' }}>
+            <div style={{ position: 'relative', minHeight: '300px' }}>
+              <img 
+                src="/mission-on-hero.png" 
+                alt="Mission On" 
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} 
+              />
+            </div>
+            <div style={{ padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div>
+                <div style={{ display: 'inline-block', padding: '6px 12px', background: 'var(--accent-glow)', color: 'var(--accent-400)', borderRadius: '20px', fontSize: '13px', fontWeight: 600, marginBottom: '16px', border: '1px solid rgba(168, 85, 247, 0.15)' }}>
+                  About the Program
+                </div>
+                <h2 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '16px', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+                  Mission On: Smart Choices
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '24px', fontSize: '15px' }}>
+                  Young Indians (Yi) Erode Chapter presents <strong>Project Shield</strong>, a comprehensive awareness and intervention initiative focused on substance abuse prevention. <strong>Mission On: Smart Choices</strong> empowers school students with the knowledge, tools, and mentorship to make safe, healthy decisions in their critical formative years.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '16px', transition: 'transform 0.2s' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>🚀</div>
+                    <div style={{ fontWeight: 600, marginBottom: '4px', fontSize: '14px', color: 'var(--text-primary)' }}>Proactive Approach</div>
+                    <div style={{ color: 'var(--text-tertiary)', fontSize: '13px', lineHeight: 1.5 }}>Pre-emptive education before bad habits can form.</div>
+                  </div>
+                  <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '16px', transition: 'transform 0.2s' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>🤝</div>
+                    <div style={{ fontWeight: 600, marginBottom: '4px', fontSize: '14px', color: 'var(--text-primary)' }}>Guided Mentorship</div>
+                    <div style={{ color: 'var(--text-tertiary)', fontSize: '13px', lineHeight: 1.5 }}>Expert counseling from trained JKKN institution mentors.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
         {/* Module Matrix Heatmap */}
         <div className="card">
           <div className="section-header">

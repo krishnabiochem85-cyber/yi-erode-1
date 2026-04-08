@@ -10,6 +10,30 @@ export default function AdminOverviewPage() {
         <p className="page-subtitle">Oversee all aspects of Project Shield</p>
       </div>
 
+      <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: '32px', border: '1px solid var(--border-subtle)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 0 }}>
+          <div style={{ position: 'relative', minHeight: '280px' }}>
+            <img 
+              src="/mission-on-hero.png" 
+              alt="Mission On" 
+              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
+          </div>
+          <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ display: 'inline-block', padding: '6px 12px', background: 'var(--accent-glow)', color: 'var(--accent-400)', borderRadius: '20px', fontSize: '12px', fontWeight: 600, marginBottom: '12px', alignSelf: 'flex-start' }}>
+              About the Program
+            </div>
+            <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '12px', color: 'var(--text-primary)' }}>
+              Mission On: Smart Choices
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '0', fontSize: '14px' }}>
+              Young Indians (Yi) Erode Chapter presents <strong>Project Shield</strong>, a comprehensive awareness program focused on substance abuse prevention. "Mission On" empowers students with tools and mentorship to make safe decisions.
+            </p>
+          </div>
+        </div>
+      </div>
+
+
       <div className="stats-grid">
         <div className="stat-card indigo">
           <div className="stat-card-header">
