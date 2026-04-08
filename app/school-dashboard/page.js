@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { getServerRole } from "@/utils/auth-server";
-import { getSchoolById } from "@/utils/school-actions";
+import { getSchoolById, getSchoolSessions } from "@/utils/school-actions";
 import Link from 'next/link';
 
 export default function SchoolDashboard() {
   const [user, setUser] = useState(null);
   const [school, setSchool] = useState(null);
+  const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -22,8 +23,12 @@ export default function SchoolDashboard() {
       setUser(data.user);
       
       if (data.school_id) {
-        const schoolData = await getSchoolById(data.school_id);
+        const [schoolData, sessionsData] = await Promise.all([
+          getSchoolById(data.school_id),
+          getSchoolSessions(data.school_id)
+        ]);
         setSchool(schoolData);
+        setSessions(sessionsData);
       }
       setLoading(false);
     }
@@ -59,9 +64,8 @@ export default function SchoolDashboard() {
 
   const greeting = currentTime.getHours() < 12 ? 'Good Morning' : currentTime.getHours() < 17 ? 'Good Afternoon' : 'Good Evening';
 
-  // Mock data for sessions for now (to be implemented in next step)
-  const upcomingSessions = [];
-  const pastSessions = [];
+  const upcomingSessions = sessions.filter(s => new Date(s.session_date) >= new Date());
+  const pastSessions = sessions.filter(s => new Date(s.session_date) < new Date());
   const completionPercent = school.status === 'completed' ? 100 : school.status === 'scheduled' ? 66 : school.status === 'assessed' ? 33 : 0;
 
   return (

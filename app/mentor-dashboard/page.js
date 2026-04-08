@@ -61,7 +61,7 @@ export default function MentorDashboard() {
             Mentor Dashboard
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            Welcome back, <span style={{ color: 'var(--primary-400)', fontWeight: 600 }}>{user?.full_name || 'Mentor'}</span>
+            Welcome back, <span style={{ color: 'var(--primary-400)', fontWeight: 600 }}>{user?.name || 'Mentor'}</span>
           </p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>

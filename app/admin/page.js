@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getDevUser } from "@/utils/auth";
+import { getGlobalFeedbackStats, getRecentComments } from "@/utils/feedback-actions";
 import { getGlobalFeedbackStats, getRecentComments } from "@/utils/feedback-actions";
 import { getAdminDashboardStats, getModuleMatrixDistribution } from "@/utils/admin-actions";
 
@@ -18,7 +18,10 @@ export default function AdminDashboard() {
     async function loadAdminData() {
       const authResponse = await fetch('/api/auth/me');
       const auth = await authResponse.json();
-      setUser(auth.user);
+      
+      if (auth.user) {
+        setUser(auth.user);
+      }
 
       const [stats, comments, globalStats, distribution] = await Promise.all([
         getGlobalFeedbackStats(),

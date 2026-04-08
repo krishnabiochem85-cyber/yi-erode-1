@@ -27,7 +27,12 @@ export async function getServerRole() {
         return { 
           role: profile.role, 
           school_id: profile.school_id,
-          user: { email: user.email, name: user.user_metadata?.full_name, id: user.id, avatar: user.user_metadata?.avatar_url } 
+          user: { 
+            email: user.email, 
+            name: profile.full_name || user.user_metadata?.full_name, 
+            id: user.id, 
+            avatar: user.user_metadata?.avatar_url 
+          } 
         };
       }
 
@@ -61,7 +66,12 @@ export async function getServerRole() {
       return { 
         role: 'unassigned', 
         school_id: null,
-        user: { email: user.email, name: user.user_metadata?.full_name, id: user.id, avatar: user.user_metadata?.avatar_url } 
+        user: { 
+          email: user.email, 
+          name: user.user_metadata?.full_name || user.email, 
+          id: user.id, 
+          avatar: user.user_metadata?.avatar_url 
+        } 
       };
     }
   } catch (e) {

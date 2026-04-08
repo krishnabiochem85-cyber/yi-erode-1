@@ -25,9 +25,9 @@ export function clearDevRole() {
 // Get demo user data for a role
 export function getDemoUser(role) {
   const users = {
-    admin: { name: 'Admin User', email: 'admin@yierode.org', role: 'admin' },
-    mentor: { name: 'Dr. Anitha', email: 'anitha@jkkn.edu', role: 'mentor' },
-    school_coordinator: { name: 'Rajesh S.', email: 'rajesh@school.edu', role: 'school_coordinator' },
+    admin: { name: 'Yi Administrator', email: 'admin@yierode.org', role: 'admin' },
+    mentor: { name: 'Shield Mentor', email: 'mentor@jkkn.edu', role: 'mentor' },
+    school_coordinator: { name: 'School Coordinator', email: 'coordinator@school.edu', role: 'school_coordinator' },
   };
   return users[role] || users.admin;
 }

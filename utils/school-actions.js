@@ -93,3 +93,26 @@ export async function getSchoolById(id) {
   }
   return data;
 }
+
+/**
+ * Fetch sessions for a specific school
+ */
+export async function getSchoolSessions(schoolId) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('sessions')
+    .select(`
+      *,
+      session_mentors (
+        profiles ( full_name )
+      )
+    `)
+    .eq('school_id', schoolId)
+    .order('session_date', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching sessions:', error.message);
+    return [];
+  }
+  return data;
+}
