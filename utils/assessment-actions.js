@@ -35,56 +35,96 @@ function calculateCategoryB(counts) {
 export async function submitAssessment(formData) {
   try {
     const supabase = await createClient();
-    const { role, user } = await getServerRole();
+    const { user, school_id } = await getServerRole();
+
+    if (!school_id) {
+      return { success: false, error: 'No school assigned to this account.' };
+    }
 
     const categoryA = calculateCategoryA(formData.countsA);
     const categoryB = calculateCategoryB(formData.countsB);
     const moduleCode = `${categoryA}-${categoryB}`;
 
-    const payload = {
-      category_a: categoryA,
-      category_b: categoryB,
-      module_code: moduleCode,
-      responses: {
-        metadata: formData.metadata,
-        answersA: formData.answersA,
-        answersB: formData.answersB
-      },
-      assessed_by: user?.email || 'dev_coordinator'
-    };
+    // 1. Save the assessment record
+    const { data: assessment, error: assessmentError } = await supabase
+      .from('assessments')
+      .insert([{
+        school_id: school_id,
+        category_a: categoryA,
+        category_b: categoryB,
+        module_code: moduleCode,
+        responses: {
+          metadata: formData.metadata,
+          answersA: formData.answersA,
+          answersB: formData.answersB
+        },
+        assessed_by: user?.email || 'coordinator'
+      }])
+      .select()
+      .single();
 
-    // For Dev Mode: we fake a successful submission without strict DB limits
-    if (!user || user.role === 'dev_school_coordinator') {
-      console.log("[Dev Mode] Assessment calculating...", payload);
-      return { success: true, moduleCode, message: 'Assessment analyzed.' };
-    }
+    if (assessmentError) throw assessmentError;
 
-    // In actual production, we need the school_id
-    // Assuming we have a way to link user to school:
-    // Update assessment
-    // ... we will stub this for now until user->school relation is firmly tested ...
+    // 2. Update the school summary info
+    const { error: schoolError } = await supabase
+      .from('schools')
+      .update({
+        status: 'assessed',
+        module_code: moduleCode,
+        grades: formData.metadata.grades || [],
+        // We can store total students if we want, but schema doesn't have a direct 'students' int field
+        // student_counts is jsonb
+        student_counts: { total: formData.metadata.totalStudents }
+      })
+      .eq('id', school_id);
 
+    if (schoolError) throw schoolError;
+
+    revalidatePath('/school-dashboard');
     return { 
       success: true, 
       moduleCode, 
+      assessmentId: assessment.id,
       message: 'Analysis complete.' 
     };
   } catch (error) {
     console.error('Submission Error:', error);
-    return { success: false, error: 'Failed to process assessment.' };
+    return { success: false, error: error.message || 'Failed to process assessment.' };
   }
 }
 
 export async function scheduleSession(scheduleData) {
   try {
     const supabase = await createClient();
+    const { school_id } = await getServerRole();
+
+    if (!school_id) throw new Error("No school linked to your account.");
+
+    // 1. Create the session
+    const { error: sessionError } = await supabase
+      .from('sessions')
+      .insert([{
+        school_id: school_id,
+        session_type: 'initial',
+        session_date: scheduleData.date,
+        start_time: scheduleData.time,
+        status: 'planned'
+      }]);
+
+    if (sessionError) throw sessionError;
+
+    // 2. Update school status
+    const { error: schoolError } = await supabase
+      .from('schools')
+      .update({ status: 'scheduled' })
+      .eq('id', school_id);
+
+    if (schoolError) throw schoolError;
     
-    // We would insert this into the `sessions` table
-    console.log("[Dev Mode] Session scheduled:", scheduleData);
-    
+    revalidatePath('/school-dashboard');
     return { success: true, message: 'Session successfully scheduled.' };
   } catch(error) {
-    console.error(error);
-    return { success: false, error: 'Failed to schedule.' };
+    console.error('Scheduling Error:', error);
+    return { success: false, error: error.message || 'Failed to schedule.' };
   }
 }

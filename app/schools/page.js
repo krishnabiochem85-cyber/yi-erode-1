@@ -1,19 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-
-const mockSchools = [
-  { id: 1, name: "Bharathi Vidya Bhavan", district: "Erode", board: "CBSE", students: 450, status: "scheduled", contact: "Principal Sharma", grade: "8-11" },
-  { id: 2, name: "Govt. Boys Hr Sec School", district: "Erode", board: "Government", students: 820, status: "assessed", contact: "Mr. Rajendran", grade: "9-11" },
-  { id: 3, name: "St. Mary's Matriculation", district: "Tiruppur", board: "Matriculation", students: 310, status: "completed", contact: "Sister Mary", grade: "8-10" },
-  { id: 4, name: "Kongu Vellalar Matric", district: "Erode", board: "Matriculation", students: 620, status: "registered", contact: "Mrs. Kavitha", grade: "8-11" },
-  { id: 5, name: "JKKN Public School", district: "Namakkal", board: "CBSE", students: 540, status: "assessed", contact: "Dr. Ramesh", grade: "9-11" },
-];
+import { useEffect, useState } from "react";
+import { getSchools, registerSchool } from "@/utils/school-actions";
 
 export default function SchoolsPage() {
+  const [schools, setSchools] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [showModal, setShowModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    loadSchools();
+  }, []);
+
+  async function loadSchools() {
+    setLoading(true);
+    const data = await getSchools();
+    setSchools(data || []);
+    setLoading(false);
+  }
 
   const statusConfig = {
     completed: { label: 'Completed', class: 'badge-success', icon: '✓' },
@@ -22,12 +31,29 @@ export default function SchoolsPage() {
     registered: { label: 'Registered', class: 'badge-info', icon: '○' },
   };
 
-  const filteredSchools = mockSchools.filter(school => {
+  const filteredSchools = schools.filter(school => {
     const matchesSearch = school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       school.district.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'all' || school.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
+
+  async function handleRegister(e) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    const formData = new FormData(e.target);
+    const result = await registerSchool(formData);
+
+    if (result.success) {
+      setShowModal(false);
+      loadSchools();
+    } else {
+      setError(result.error);
+    }
+    setIsSubmitting(false);
+  }
 
   return (
     <div>
@@ -37,7 +63,7 @@ export default function SchoolsPage() {
             <h1 className="page-title">School Management</h1>
             <p className="page-subtitle">Manage participating schools and track their assessment progress</p>
           </div>
-          <button className="btn btn-primary">
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
             <span>+</span> Register School
           </button>
         </div>
@@ -52,10 +78,10 @@ export default function SchoolsPage() {
         animation: 'fadeInUp 0.5s ease-out 0.1s both'
       }}>
         {[
-          { label: 'Total Schools', value: mockSchools.length, color: 'var(--primary-400)' },
-          { label: 'Assessed', value: mockSchools.filter(s => s.status === 'assessed').length, color: 'var(--warning-400)' },
-          { label: 'Scheduled', value: mockSchools.filter(s => s.status === 'scheduled').length, color: 'var(--info-400)' },
-          { label: 'Completed', value: mockSchools.filter(s => s.status === 'completed').length, color: 'var(--success-400)' },
+          { label: 'Total Schools', value: schools.length, color: 'var(--primary-400)' },
+          { label: 'Assessed', value: schools.filter(s => s.status === 'assessed').length, color: 'var(--warning-400)' },
+          { label: 'Scheduled', value: schools.filter(s => s.status === 'scheduled').length, color: 'var(--info-400)' },
+          { label: 'Completed', value: schools.filter(s => s.status === 'completed').length, color: 'var(--success-400)' },
         ].map((stat) => (
           <div key={stat.label} style={{
             padding: '18px 20px',
@@ -110,70 +136,138 @@ export default function SchoolsPage() {
               ))}
             </div>
           </div>
-          <button className="btn btn-secondary btn-sm">📤 Export CSV</button>
         </div>
         
         <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>School Name</th>
-                <th>District</th>
-                <th>Board</th>
-                <th>Grades</th>
-                <th>Students</th>
-                <th>Contact</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSchools.map(school => {
-                const status = statusConfig[school.status];
-                return (
-                  <tr key={school.id}>
-                    <td style={{ fontWeight: 600, color: "var(--text-primary)", letterSpacing: '-0.1px' }}>{school.name}</td>
-                    <td>{school.district}</td>
-                    <td>
-                      <span style={{
-                        padding: '3px 10px',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        background: 'var(--bg-glass-strong)',
-                        border: '1px solid var(--border-subtle)'
-                      }}>
-                        {school.board}
-                      </span>
-                    </td>
-                    <td style={{ fontWeight: 500 }}>{school.grade}</td>
-                    <td style={{ fontWeight: 600 }}>{school.students.toLocaleString()}</td>
-                    <td>{school.contact}</td>
-                    <td><span className={`badge ${status.class}`}>{status.icon} {status.label}</span></td>
-                    <td>
-                      <Link href={`/schools/${school.id}`} className="section-action" style={{ textDecoration: 'none' }}>
-                        View →
-                      </Link>
+          {loading ? (
+             <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-tertiary)' }}>Loading schools...</div>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>School Name</th>
+                  <th>District</th>
+                  <th>Board</th>
+                  <th>Contact Person</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSchools.map(school => {
+                  const status = statusConfig[school.status] || statusConfig.registered;
+                  return (
+                    <tr key={school.id}>
+                      <td style={{ fontWeight: 600, color: "var(--text-primary)", letterSpacing: '-0.1px' }}>{school.name}</td>
+                      <td>{school.district}</td>
+                      <td>
+                        <span style={{
+                          padding: '3px 10px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          background: 'var(--bg-glass-strong)',
+                          border: '1px solid var(--border-subtle)'
+                        }}>
+                          {school.board_type}
+                        </span>
+                      </td>
+                      <td>{school.contact_person || '—'}</td>
+                      <td><span className={`badge ${status.class}`}>{status.icon} {status.label}</span></td>
+                      <td>
+                        <Link href={`/schools/${school.id}`} className="section-action" style={{ textDecoration: 'none' }}>
+                          View →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+                
+                {filteredSchools.length === 0 && (
+                  <tr>
+                    <td colSpan="6">
+                      <div className="empty-state">
+                        <div className="empty-state-icon">🏫</div>
+                        <div className="empty-state-title">No schools found</div>
+                        <div className="empty-state-text">Try adjusting your search criteria or register a new school.</div>
+                      </div>
                     </td>
                   </tr>
-                );
-              })}
-              
-              {filteredSchools.length === 0 && (
-                <tr>
-                  <td colSpan="8">
-                    <div className="empty-state">
-                      <div className="empty-state-icon">🏫</div>
-                      <div className="empty-state-title">No schools found</div>
-                      <div className="empty-state-text">Try adjusting your search criteria or register a new school.</div>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
+
+      {/* Registration Modal */}
+      {showModal && (
+        <div className="modal-overlay" style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }} onClick={() => setShowModal(false)}>
+          <div className="card" style={{ width: '100%', maxWidth: '500px', padding: '32px' }} onClick={e => e.stopPropagation()}>
+            <div className="section-header">
+              <h2 className="section-title">Register New School</h2>
+              <button className="btn btn-sm" onClick={() => setShowModal(false)}>✕</button>
+            </div>
+            
+            <form onSubmit={handleRegister}>
+              <div className="form-group">
+                <label className="form-label">School Name</label>
+                <input type="text" name="name" className="form-input" required placeholder="e.g. Bharathi Vidya Bhavan" />
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-group">
+                  <label className="form-label">District</label>
+                  <input type="text" name="district" className="form-input" required placeholder="e.g. Erode" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Board</label>
+                  <select name="board_type" className="form-input" required>
+                    <option value="CBSE">CBSE</option>
+                    <option value="Matriculation">Matriculation</option>
+                    <option value="Government">Government</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Contact Person</label>
+                <input type="text" name="contact_person" className="form-input" placeholder="e.g. Principal Sharma" />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-group">
+                  <label className="form-label">Contact Phone</label>
+                  <input type="text" name="phone" className="form-input" placeholder="e.g. +91 98765 43210" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Contact Email</label>
+                  <input type="email" name="email" className="form-input" placeholder="e.g. principal@school.edu" />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Address</label>
+                <textarea name="address" className="form-input" rows="2" placeholder="Full school address..."></textarea>
+              </div>
+
+              {error && <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px' }}>{error}</div>}
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={isSubmitting}>
+                  {isSubmitting ? 'Registering...' : 'Register School'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

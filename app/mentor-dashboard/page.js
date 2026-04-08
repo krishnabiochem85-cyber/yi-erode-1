@@ -1,225 +1,300 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getDevUser } from "@/utils/auth";
-import { getMentorFeedback, submitMentorAvailability } from "@/utils/mentor-actions";
-
-const upcomingSessions = [
-  { id: 1, date: "2026-04-10", time: "10:00 AM", school: "Bharathi Vidya Bhavan", module: "A2-B2", status: "confirmed", type: "Initial" },
-  { id: 2, date: "2026-04-12", time: "02:00 PM", school: "Govt. Boys Hr Sec", module: "A1-B3", status: "planned", type: "Follow-up" },
-];
+import { 
+  getMentorAvailability, 
+  updateMentorAvailability, 
+  getAssignedSchools, 
+  getMentorInteractions,
+  getMentorFeedbackStats
+} from "@/utils/mentor-actions";
+import Link from 'next/link';
 
 export default function MentorDashboard() {
   const [user, setUser] = useState(null);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [activeTab, setActiveTab] = useState('calendar');
+  const [loading, setLoading] = useState(true);
   
-  // Feedback State
-  const [pastFeedback, setPastFeedback] = useState([]);
-  
-  // Calendar State
-  const [currentMonth, setCurrentMonth] = useState(new Date(2026, 3, 1)); // April 2026
-  const [selectedDates, setSelectedDates] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  // Feature States
+  const [availability, setAvailability] = useState([]);
+  const [schools, setSchools] = useState([]);
+  const [interactions, setInteractions] = useState([]);
+  const [feedback, setFeedback] = useState([]);
 
   useEffect(() => {
-    setUser(getDevUser());
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    
-    // Fetch real or fallback feedback
-    getMentorFeedback().then(data => setPastFeedback(data));
-    
-    return () => clearInterval(timer);
+    async function loadDashboard() {
+      try {
+        const response = await fetch('/api/auth/me');
+        const auth = await response.json();
+        setUser(auth.user);
+
+        if (auth.user?.id) {
+          const [avail, assignedSchools, chatLog, feedbackData] = await Promise.all([
+            getMentorAvailability(auth.user.id),
+            getAssignedSchools(auth.user.id),
+            getMentorInteractions(auth.user.id),
+            getMentorFeedbackStats(auth.user.id)
+          ]);
+          setAvailability(avail);
+          setSchools(assignedSchools);
+          setInteractions(chatLog);
+          setFeedback(feedbackData);
+        }
+      } catch (err) {
+        console.error("Dashboard Load Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadDashboard();
   }, []);
 
-  const greeting = currentTime.getHours() < 12 ? 'Good Morning' : currentTime.getHours() < 17 ? 'Good Afternoon' : 'Good Evening';
+  if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Initializing Mentor Workspace...</div>;
 
-  // --- Calendar Logic ---
-  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
-  const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
-  
-  const handleDateToggle = (day) => {
-    const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth()+1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    setSelectedDates(prev => prev.includes(dateStr) ? prev.filter(d => d !== dateStr) : [...prev, dateStr]);
+  return (
+    <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
+      
+      {/* Header */}
+      <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <h1 style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
+            Mentor Dashboard
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+            Welcome back, <span style={{ color: 'var(--primary-400)', fontWeight: 600 }}>{user?.full_name || 'Mentor'}</span>
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+             <button className="btn btn-secondary" onClick={() => window.location.reload()}>Refresh Data</button>
+        </div>
+      </div>
+
+      {/* Tabs Navigation */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', background: 'var(--bg-glass)', padding: '6px', borderRadius: '12px', border: '1px solid var(--border)', width: 'fit-content' }}>
+        {[
+          { id: 'calendar', label: '📅 Availability', color: 'var(--emerald-400)' },
+          { id: 'schools', label: '🏫 Schools', color: 'var(--blue-400)' },
+          { id: 'feedback', label: '⭐ Feedback', color: 'var(--amber-400)' },
+          { id: 'chat', label: '💬 Interactions', color: 'var(--indigo-400)' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '14px', transition: 'all 0.2s',
+              background: activeTab === tab.id ? 'var(--bg-elevated)' : 'transparent',
+              color: activeTab === tab.id ? tab.color : 'var(--text-secondary)',
+              boxShadow: activeTab === tab.id ? '0 4px 12px rgba(0,0,0,0.1)' : 'none'
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div className="card" style={{ padding: '32px', minHeight: '500px' }}>
+        {activeTab === 'calendar' && user && <CalendarSection availability={availability} user={user} refresh={() => getMentorAvailability(user.id).then(setAvailability)} />}
+        {activeTab === 'schools' && <SchoolsSection schools={schools} />}
+        {activeTab === 'feedback' && <FeedbackSection feedback={feedback} />}
+        {activeTab === 'chat' && <InteractionsSection interactions={interactions} />}
+      </div>
+    </div>
+  );
+}
+
+/* --- CALENDAR SECTION --- */
+function CalendarSection({ availability, user, refresh }) {
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [reason, setReason] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async (type) => {
+    setIsSaving(true);
+    await updateMentorAvailability(user.id, selectedDate, type, reason);
+    setSelectedDate(null);
+    setReason('');
+    refresh();
+    setIsSaving(false);
   };
 
-  const handleSubmitAvailability = async () => {
-    if (selectedDates.length === 0) return;
-    setIsSubmitting(true);
-    const formattedDates = selectedDates.map(date => ({ date, status: 'pending' }));
-    const result = await submitMentorAvailability(formattedDates);
-    if (result.success) {
-      setSubmitSuccess(true);
-      setTimeout(() => setSubmitSuccess(false), 3000);
-    }
-    setIsSubmitting(false);
-  };
+  const today = new Date();
+  const days = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date();
+    d.setDate(today.getDate() + i);
+    return d;
+  });
 
   return (
     <div>
-      {/* Hero Welcome */}
-      <div style={{
-        marginBottom: '36px',
-        padding: '32px 36px',
-        borderRadius: '20px',
-        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.05) 50%, rgba(99, 102, 241, 0.03) 100%)',
-        border: '1px solid rgba(16, 185, 129, 0.12)',
-        position: 'relative',
-        overflow: 'hidden',
-        animation: 'fadeInUp 0.5s ease-out'
-      }}>
-        <div style={{ position: 'absolute', top: '-60px', right: '-40px', width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(16, 185, 129, 0.1), transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '4px' }}>{greeting} 👋</p>
-          <h1 style={{ fontSize: '28px', fontWeight: 800, background: 'linear-gradient(135deg, #6ee7b7, #34d399, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '6px' }}>
-            {user?.name || 'Mentor'}
-          </h1>
-          <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>Manage your upcoming schedule, block dates, and review student feedback.</p>
-        </div>
-      </div>
+      <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>Manage Availability</h3>
+      <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>
+        Mark days as blocked for exams, hospital duties, or other schedules.
+      </p>
 
-      {/* Main Grid Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '24px', alignItems: 'start' }}>
-        
-        {/* Left Column: Stats & Feedback */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* Stats */}
-          <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-            <div className="stat-card emerald">
-              <div className="stat-card-header"><div className="stat-card-icon">📅</div></div>
-              <div className="stat-card-value">{upcomingSessions.length}</div>
-              <div className="stat-card-label">Upcoming</div>
-            </div>
-            <div className="stat-card blue">
-              <div className="stat-card-header"><div className="stat-card-icon">✅</div></div>
-              <div className="stat-card-value">{pastFeedback.length}</div>
-              <div className="stat-card-label">Completed</div>
-            </div>
-            <div className="stat-card amber" style={{ position: 'relative' }}>
-              <div className="stat-card-header">
-                <div className="stat-card-icon">⭐</div>
-                <div className="stat-card-badge up" style={{ color: 'var(--success-400)', background: 'var(--success-bg)' }}>Top 5%</div>
-              </div>
-              <div className="stat-card-value">
-                {pastFeedback.some(f => f.rating) 
-                 ? (pastFeedback.reduce((a,b)=>a+(b.rating||0),0)/pastFeedback.filter(f=>f.rating).length).toFixed(1) 
-                 : '—'}
-              </div>
-              <div className="stat-card-label">Average Rating</div>
-            </div>
-          </div>
-
-          {/* Feedback & Performance */}
-          <div className="card" style={{ animation: 'fadeInUp 0.5s ease-out 0.2s both' }}>
-            <div className="section-header">
-              <h2 className="section-title">⭐ Student Feedback</h2>
-              <span className="badge badge-primary">Performance</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {pastFeedback.map((session, index) => (
-                <div key={index} className="activity-item" style={{
-                  padding: '20px', borderRadius: 'var(--radius-lg)', background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-                  display: 'flex', flexDirection: 'column', gap: '12px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '15px' }}>{session.school}</div>
-                      <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginTop: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <span>📅 {new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                        <span>•</span>
-                        <span>🕒 {session.time}</span>
-                      </div>
-                    </div>
-                    {session.rating && (
-                      <div style={{ display: 'flex', gap: '2px' }}>
-                        {[...Array(5)].map((_, i) => (
-                          <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill={i < Math.round(session.rating) ? "var(--warning-400)" : "var(--border)"}>
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                          </svg>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {session.comments && (
-                    <div style={{ padding: '12px', background: 'var(--bg-base)', borderRadius: '8px', fontSize: '14px', color: 'var(--text-secondary)', fontStyle: 'italic', borderLeft: '3px solid var(--primary-400)' }}>
-                      "{session.comments}"
-                    </div>
-                  )}
-                  {!session.feedbackSubmitted && (
-                    <div style={{ fontSize: '12px', color: 'var(--warning-400)' }}>Pending student responses...</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Calendar */}
-        <div className="card" style={{ animation: 'fadeInUp 0.5s ease-out 0.1s both', position: 'sticky', top: '100px' }}>
-          <div className="section-header">
-            <h2 className="section-title">📅 Availability</h2>
-          </div>
-          <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '20px' }}>
-            Click dates you wish to <b>block</b>. Admins will verify your schedule.
-          </p>
-
-          <div style={{ background: 'var(--bg-base)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <button style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}>◀</button>
-              <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
-              </div>
-              <button style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}>▶</button>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', marginBottom: '8px', fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: 600 }}>
-              {['S','M','T','W','T','F','S'].map((d,i) => <div key={i}>{d}</div>)}
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
-              {[...Array(firstDayOfMonth)].map((_, i) => <div key={i}></div>)}
-              {[...Array(daysInMonth)].map((_, i) => {
-                const day = i + 1;
-                const dStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth()+1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const isSelected = selectedDates.includes(dStr);
-                const isPast = day < 4 && currentMonth.getMonth() === 3; // fake past for April 2026
-                return (
-                  <button 
-                    key={day}
-                    onClick={() => !isPast && handleDateToggle(day)}
-                    disabled={isPast}
-                    style={{
-                      aspectRatio: '1', border: '1px solid', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: isPast ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
-                      background: isSelected ? 'var(--primary-glow)' : 'transparent',
-                      color: isPast ? 'var(--text-tertiary)' : isSelected ? 'var(--primary-400)' : 'var(--text-secondary)',
-                      borderColor: isSelected ? 'var(--primary-400)' : 'transparent'
-                    }}
-                    onMouseOver={e => !isPast && !isSelected && (e.currentTarget.style.background = 'var(--bg-elevated)')}
-                    onMouseOut={e => !isPast && !isSelected && (e.currentTarget.style.background = 'transparent')}
-                  >
-                    {day}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-              <div style={{ width: '12px', height: '12px', borderRadius: '4px', background: 'var(--primary-glow)', border: '1px solid var(--primary-400)' }}></div>
-              Selected Blocked Dates ({selectedDates.length})
-            </div>
-            <button 
-              onClick={handleSubmitAvailability}
-              disabled={selectedDates.length === 0 || isSubmitting}
-              className="btn btn-primary" 
-              style={{ width: '100%', justifyContent: 'center' }}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
+        {days.map(date => {
+          const dateStr = date.toISOString().split('T')[0];
+          const record = availability.find(a => a.date === dateStr);
+          const isBlocked = record?.type === 'blocked';
+          
+          return (
+            <div 
+              key={dateStr}
+              onClick={() => setSelectedDate(dateStr)}
+              style={{
+                background: isBlocked ? 'var(--error-glow)' : 'var(--bg-elevated)',
+                border: `1px solid ${isBlocked ? 'var(--error-400)' : 'var(--border)'}`,
+                padding: '16px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', transition: 'transform 0.2s',
+                transform: selectedDate === dateStr ? 'scale(1.05)' : 'none'
+              }}
             >
-              {isSubmitting ? 'Submitting...' : submitSuccess ? '✓ Submitted for Approval' : 'Submit Blocked Dates'}
-            </button>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+                {date.toLocaleDateString('en-US', { weekday: 'short' })}
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 800, margin: '4px 0' }}>{date.getDate()}</div>
+              <div style={{ fontSize: '13px', fontWeight: 500, color: isBlocked ? 'var(--error-400)' : 'var(--success-400)' }}>
+                {isBlocked ? 'Blocked' : 'Available'}
+              </div>
+              {record?.reason && (
+                <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '4px', fontStyle: 'italic' }}>
+                  "{record.reason}"
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {selectedDate && (
+        <div style={{ marginTop: '32px', padding: '24px', background: 'var(--bg-glass)', borderRadius: '16px', border: '1px solid var(--primary-400)' }}>
+          <h4 style={{ fontWeight: 700, marginBottom: '16px' }}>Update {selectedDate}</h4>
+          <div style={{ marginBottom: '16px' }}>
+            <label className="form-label">Reason (if blocking)</label>
+            <input 
+              className="form-input" 
+              placeholder="e.g. SEM Exams, Hospital Internship..." 
+              value={reason} 
+              onChange={e => setReason(e.target.value)}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button className="btn btn-primary" onClick={() => handleSave('free')} disabled={isSaving}>Set as Available</button>
+            <button className="btn btn-danger" onClick={() => handleSave('blocked')} disabled={isSaving}>Block this Date</button>
+            <button className="btn btn-secondary" onClick={() => setSelectedDate(null)}>Cancel</button>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+/* --- SCHOOLS SECTION --- */
+function SchoolsSection({ schools }) {
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div>
+          <h3 style={{ fontSize: '20px', fontWeight: 700 }}>Committed Schools</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>List of schools officially allocated to you by the Admin.</p>
+        </div>
+        <div className="badge badge-info">Admin Controls Allocation</div>
       </div>
+
+      {schools.length === 0 ? (
+        <div style={{ padding: '60px', textAlign: 'center', background: 'var(--bg-elevated)', borderRadius: '16px', color: 'var(--text-tertiary)' }}>
+          No schools currently allocated. Please check back after Admin assignment.
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+          {schools.map(school => (
+            <div key={school.id} className="activity-item" style={{ padding: '24px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                 <div style={{ fontWeight: 800, fontSize: '18px' }}>{school.name}</div>
+                 <div className="badge badge-success">{school.status}</div>
+              </div>
+              <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                📍 {school.district}
+              </div>
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                <div>Next Session: <span style={{ color: 'var(--primary-400)', fontWeight: 600 }}>{school.next_session || 'TBD'}</span></div>
+                <div>{school.type}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* --- FEEDBACK SECTION --- */
+function FeedbackSection({ feedback }) {
+  return (
+    <div style={{ maxWidth: '800px' }}>
+      <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '24px' }}>Learner Feedback</h3>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '32px' }}>
+        <div style={{ padding: '24px', borderRadius: '16px', background: 'linear-gradient(135deg, var(--emerald-glow), transparent)', border: '1px solid var(--emerald-400)' }}>
+            <div style={{ fontSize: '32px', fontWeight: 900, color: 'var(--emerald-400)' }}>4.8</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Average Rating</div>
+        </div>
+        <div style={{ padding: '24px', borderRadius: '16px', background: 'linear-gradient(135deg, var(--blue-glow), transparent)', border: '1px solid var(--blue-400)' }}>
+            <div style={{ fontSize: '32px', fontWeight: 900, color: 'var(--blue-400)' }}>{feedback.length}</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Total Feedbacks</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {feedback.map(item => (
+          <div key={item.id} style={{ padding: '20px', borderRadius: '12px', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontWeight: 700 }}>{item.school}</span>
+                <span style={{ color: 'var(--amber-400)' }}>{'⭐'.repeat(item.rating)}</span>
+             </div>
+             <p style={{ fontSize: '14px', fontStyle: 'italic', color: 'var(--text-secondary)' }}>"{item.comment}"</p>
+             <div style={{ textAlign: 'right', fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '8px' }}>{item.date}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* --- INTERACTIONS SECTION --- */
+function InteractionsSection({ interactions }) {
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div>
+          <h3 style={{ fontSize: '20px', fontWeight: 700 }}>Anonymous Interaction Wall</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Questions and messages from learners at your committed schools.</p>
+        </div>
+        <div className="badge badge-warning">Admin Moderated</div>
+      </div>
+
+      {interactions.length === 0 ? (
+        <div style={{ padding: '60px', textAlign: 'center', background: 'var(--bg-elevated)', borderRadius: '16px', color: 'var(--text-tertiary)' }}>
+           No interactions yet. Messages will appear here as learners reach out.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {interactions.map(msg => (
+            <div key={msg.id} style={{ 
+              padding: '20px', borderRadius: '16px 16px 16px 0', background: 'var(--bg-glass)', border: '1px solid var(--border)',
+              maxWidth: '80%', alignSelf: 'flex-start'
+            }}>
+               <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--primary-400)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                 Learner @ {msg.schools?.name}
+               </div>
+               <p style={{ fontSize: '15px', color: 'var(--text-primary)' }}>{msg.message}</p>
+               <div style={{ textAlign: 'right', fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '8px' }}>
+                 {new Date(msg.created_at).toLocaleString()}
+               </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

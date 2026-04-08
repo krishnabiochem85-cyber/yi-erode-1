@@ -1,46 +1,64 @@
-"use client";
-
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { redirect } from "next/navigation";
+import { getServerRole } from "@/utils/auth-server";
+import { getSchoolById } from "@/utils/school-actions";
+import { createClient } from "@/utils/supabase/server";
 
-// Mock Data
-const mockSchoolDetails = {
-  id: 1, 
-  name: "Bharathi Vidya Bhavan", 
-  district: "Erode", 
-  board: "CBSE", 
-  address: "123 School Road, Erode 638001",
-  contact: { name: "Principal Sharma", phone: "+91 9876543210", email: "principal@bvb.edu.in" },
-  demographics: {
-    students: 450,
-    grades: [8, 9, 10, 11]
-  },
-  status: "scheduled",
-  moduleAssigned: "A2-B2",
-  sessions: [
-    { id: 1, type: "initial", date: "2026-04-15", time: "10:00 AM", status: "planned", mentors: ["Dr. Anitha", "Ramesh K."] }
-  ]
-};
+export default async function SchoolDetailPage({ params }) {
+  const { id } = await params;
+  
+  // 1. Security Check
+  const authData = await getServerRole();
+  const isAdmin = authData?.role === 'admin';
+  const isCoordinator = authData?.role === 'school_coordinator';
+  
+  if (!isAdmin && (!isCoordinator || authData?.school_id !== id)) {
+    // If coordinator tries to access another school
+    if (isCoordinator) {
+        redirect('/school-dashboard');
+    }
+    redirect('/');
+  }
 
-export default function SchoolDetailPage() {
-  const params = useParams();
-  const school = mockSchoolDetails;
+  // 2. Fetch School Data
+  const school = await getSchoolById(id);
+  
+  if (!school) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center' }}>
+        <h2 style={{ color: 'var(--text-secondary)' }}>School not found</h2>
+        <Link href="/schools" className="btn btn-secondary" style={{ marginTop: '20px' }}>Back to Schools</Link>
+      </div>
+    );
+  }
+
+  const statusConfig = {
+    registered: { label: 'Registered', class: 'badge-info', icon: '📝' },
+    assessed: { label: 'Assessed', class: 'badge-success', icon: '🎯' },
+    scheduled: { label: 'Scheduled', class: 'badge-primary', icon: '📅' },
+    in_progress: { label: 'In Progress', class: 'badge-warning', icon: '⚡' },
+    completed: { label: 'Completed', class: 'badge-emerald', icon: '✅' },
+  };
+  
+  const status = statusConfig[school.status] || statusConfig.registered;
 
   return (
     <div>
       <div className="page-header">
-        <Link href="/schools" style={{ fontSize: '13px', color: 'var(--text-secondary)', textDecoration: 'none', marginBottom: '8px', display: 'inline-block' }}>
-          ← Back to Schools
+        <Link href={isAdmin ? "/schools" : "/school-dashboard"} style={{ fontSize: '13px', color: 'var(--text-secondary)', textDecoration: 'none', marginBottom: '8px', display: 'inline-block' }}>
+          {isAdmin ? "← Back to Schools" : "← Back to Your Dashboard"}
         </Link>
         <div className="page-header-row">
           <div>
             <h1 className="page-title">{school.name}</h1>
-            <p className="page-subtitle">{school.district} • {school.board} Board • {school.students || school.demographics.students} Students</p>
+            <p className="page-subtitle">{school.district} • {school.board_type} Board</p>
           </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button className="btn btn-secondary">Edit Details</button>
-            <button className="btn btn-primary">Schedule Session</button>
-          </div>
+          {isAdmin && (
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button className="btn btn-secondary">Edit Details</button>
+                <button className="btn btn-primary">Schedule Session</button>
+              </div>
+          )}
         </div>
       </div>
 
@@ -51,19 +69,28 @@ export default function SchoolDetailPage() {
           </div>
           <div className="form-group">
             <div className="form-label">Contact Person</div>
-            <div>{school.contact.name} ({school.contact.phone})</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{school.contact.email}</div>
+            <div>{school.contact_person || 'Not specified'}</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                📞 {school.phone || '—'}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
+                ✉️ {school.email || '—'}
+            </div>
           </div>
           <div className="form-group">
             <div className="form-label">Address</div>
-            <div>{school.address}</div>
+            <div style={{ fontSize: '14px', lineHeight: 1.5 }}>{school.address || 'No address provided'}</div>
           </div>
           <div className="form-group">
             <div className="form-label">Participating Grades</div>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-              {school.demographics.grades.map(g => (
-                <span key={g} className="badge badge-info">Grade {g}</span>
-              ))}
+            <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+              {(school.grades || []).length > 0 ? (
+                  school.grades.map(g => (
+                    <span key={g} className="badge badge-info">Grade {g}</span>
+                  ))
+              ) : (
+                  <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>No grades specified</span>
+              )}
             </div>
           </div>
         </div>
@@ -71,37 +98,37 @@ export default function SchoolDetailPage() {
         <div className="card">
           <div className="section-header">
             <h2 className="section-title">Program Status</h2>
-            <span className="badge badge-primary">Scheduled</span>
+            <span className={`badge ${status.class}`}>{status.icon} {status.label}</span>
           </div>
           
           <div style={{ marginBottom: '24px' }}>
             <div className="form-label" style={{ marginBottom: '8px' }}>Module Assigned</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div className="matrix-cell" style={{ display: 'inline-flex', width: '48px', height: '48px', backgroundColor: 'var(--accent-glow)', border: '1px solid var(--accent-400)' }}>
-                <span style={{ fontSize: '14px', color: 'var(--accent-400)' }}>{school.moduleAssigned}</span>
+              <div className="matrix-cell" style={{ 
+                  display: 'inline-flex', width: '48px', height: '48px', 
+                  backgroundColor: school.module_code ? 'var(--accent-glow)' : 'var(--bg-glass)', 
+                  border: `1px solid ${school.module_code ? 'var(--accent-400)' : 'var(--border-subtle)'}`,
+                  borderRadius: '12px',
+                  alignItems: 'center', justifyContent: 'center'
+              }}>
+                <span style={{ fontSize: '14px', color: school.module_code ? 'var(--accent-400)' : 'var(--text-tertiary)', fontWeight: 700 }}>
+                    {school.module_code || '??'}
+                </span>
               </div>
               <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                Based on Demographic A2 and Behavioral B2 assessment.
+                {school.module_code 
+                  ? "Based on the assessment data provided by your school."
+                  : "Assessment pending. Please complete the module planning questionnaire."}
               </div>
             </div>
           </div>
 
           <div>
-            <div className="form-label" style={{ marginBottom: '8px' }}>Upcoming Sessions</div>
-            {school.sessions.map(session => (
-              <div key={session.id} style={{ padding: '12px', background: 'var(--bg-glass)', borderRadius: 'var(--radius-sm)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{session.type} Session</span>
-                  <span className="badge badge-warning">{session.status}</span>
-                </div>
-                <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                  📅 {session.date} at {session.time}
-                </div>
-                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  👥 Mentors: {session.mentors.join(', ')}
-                </div>
-              </div>
-            ))}
+            <div className="form-label" style={{ marginBottom: '8px' }}>Program Activity</div>
+            <div style={{ padding: '24px', textAlign: 'center', background: 'var(--bg-glass)', borderRadius: 'var(--radius-md)' }}>
+                <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🕒</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>Activity details will appear here once sessions are scheduled.</div>
+            </div>
           </div>
         </div>
       </div>

@@ -1,26 +1,69 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { getSchools } from '@/utils/school-actions';
 
 export default function RoleTable({ initialProfiles }) {
   const [profiles, setProfiles] = useState(initialProfiles);
+  const [schools, setSchools] = useState([]);
   const [loadingId, setLoadingId] = useState(null);
   const [successId, setSuccessId] = useState(null);
   const supabase = createClient();
 
+  useEffect(() => {
+    async function loadSchools() {
+      const data = await getSchools();
+      setSchools(data || []);
+    }
+    loadSchools();
+  }, []);
+
   const handleRoleChange = async (profileId, newRole) => {
     setLoadingId(profileId);
     
+    // If switching AWAY from school_coordinator, clear the school_id
+    const updates = { role: newRole, updated_at: new Date().toISOString() };
+    if (newRole !== 'school_coordinator') {
+      updates.school_id = null;
+    }
+
     const { error } = await supabase
       .from('profiles')
-      .update({ role: newRole, updated_at: new Date().toISOString() })
+      .update(updates)
       .eq('id', profileId);
       
     if (error) {
       alert(`Failed to update role: ${error.message}`);
     } else {
-      setProfiles(profiles.map(p => p.id === profileId ? { ...p, role: newRole } : p));
+      setProfiles(profiles.map(p => p.id === profileId ? { ...p, role: newRole, school_id: updates.school_id } : p));
+      setSuccessId(profileId);
+      setTimeout(() => setSuccessId(null), 2000);
+    }
+    setLoadingId(null);
+  };
+
+  const handleSchoolChange = async (profileId, schoolId) => {
+    // Check if school is already taken by someone ELSE
+    if (schoolId !== 'none') {
+      const isTaken = profiles.some(p => p.school_id === schoolId && p.id !== profileId);
+      if (isTaken) {
+        const confirmChange = confirm("This school already has an assigned coordinator. Assigning it here will result in multiple coordinators. Proceed?");
+        if (!confirmChange) return;
+      }
+    }
+
+    setLoadingId(profileId);
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ school_id: schoolId === 'none' ? null : schoolId, updated_at: new Date().toISOString() })
+      .eq('id', profileId);
+      
+    if (error) {
+      alert(`Failed to update school: ${error.message}`);
+    } else {
+      setProfiles(profiles.map(p => p.id === profileId ? { ...p, school_id: schoolId === 'none' ? null : schoolId } : p));
       setSuccessId(profileId);
       setTimeout(() => setSuccessId(null), 2000);
     }
@@ -56,9 +99,8 @@ export default function RoleTable({ initialProfiles }) {
               <tr>
                 <th>User</th>
                 <th>Email</th>
-                <th>Joined</th>
                 <th>Current Role</th>
-                <th>Change Role</th>
+                <th>Manage Access</th>
               </tr>
             </thead>
             <tbody>
@@ -93,9 +135,6 @@ export default function RoleTable({ initialProfiles }) {
                     <td style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
                       {profile.email || '—'}
                     </td>
-                    <td style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>
-                      {profile.updated_at ? new Date(profile.updated_at).toLocaleDateString() : '—'}
-                    </td>
                     <td>
                       <span style={{
                         padding: '4px 12px',
@@ -110,34 +149,67 @@ export default function RoleTable({ initialProfiles }) {
                       </span>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <select
-                          value={profile.role || 'unassigned'}
-                          onChange={(e) => handleRoleChange(profile.id, e.target.value)}
-                          disabled={loadingId === profile.id}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '8px',
-                            background: 'var(--bg-glass)',
-                            border: '1px solid var(--border-subtle)',
-                            color: 'var(--text-primary)',
-                            fontSize: '12px',
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            outline: 'none',
-                            minWidth: '140px'
-                          }}
-                        >
-                          <option value="admin">🔐 Administrator</option>
-                          <option value="school_coordinator">🏫 School Coordinator</option>
-                          <option value="mentor">👤 Mentor</option>
-                          <option value="unassigned">⏳ Unassigned</option>
-                        </select>
-                        {loadingId === profile.id && (
-                          <span style={{ fontSize: '11px', color: 'var(--primary-400)', fontWeight: 600 }}>Saving...</span>
-                        )}
-                        {successId === profile.id && (
-                          <span style={{ fontSize: '11px', color: 'var(--success-400)', fontWeight: 600 }}>✓ Saved</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <select
+                            value={profile.role || 'unassigned'}
+                            onChange={(e) => handleRoleChange(profile.id, e.target.value)}
+                            disabled={loadingId === profile.id}
+                            style={{
+                              padding: '6px 12px',
+                              borderRadius: '8px',
+                              background: 'var(--bg-glass)',
+                              border: '1px solid var(--border-subtle)',
+                              color: 'var(--text-primary)',
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                              outline: 'none',
+                              minWidth: '160px'
+                            }}
+                          >
+                            <option value="admin">🔐 Administrator</option>
+                            <option value="school_coordinator">🏫 School Coordinator</option>
+                            <option value="mentor">👤 Mentor</option>
+                            <option value="unassigned">⏳ Unassigned</option>
+                          </select>
+                          {loadingId === profile.id && (
+                            <span style={{ fontSize: '11px', color: 'var(--primary-400)', fontWeight: 600 }}>Saving...</span>
+                          )}
+                          {successId === profile.id && (
+                            <span style={{ fontSize: '11px', color: 'var(--success-400)', fontWeight: 600 }}>✓ Saved</span>
+                          )}
+                        </div>
+
+                        {profile.role === 'school_coordinator' && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+                             <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-tertiary)', minWidth: '60px' }}>ASSIGN SCHOOL:</span>
+                             <select
+                                value={profile.school_id || 'none'}
+                                onChange={(e) => handleSchoolChange(profile.id, e.target.value)}
+                                disabled={loadingId === profile.id}
+                                style={{
+                                  flex: 1,
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  background: 'var(--bg-card)',
+                                  border: '1px solid var(--border-subtle)',
+                                  color: profile.school_id ? 'var(--text-primary)' : 'var(--warning-400)',
+                                  fontSize: '11px',
+                                  outline: 'none'
+                                }}
+                             >
+                               <option value="none">-- Unassigned --</option>
+                               {schools.map(school => {
+                                 const currentCoord = profiles.find(p => p.school_id === school.id && p.id !== profile.id);
+                                 return (
+                                   <option key={school.id} value={school.id}>
+                                     {school.name} {currentCoord ? `(👤 ${currentCoord.full_name || 'Assigned'})` : ''}
+                                   </option>
+                                 );
+                               })}
+                             </select>
+                          </div>
                         )}
                       </div>
                     </td>
@@ -151,3 +223,5 @@ export default function RoleTable({ initialProfiles }) {
     </div>
   );
 }
+
+

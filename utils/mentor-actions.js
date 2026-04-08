@@ -1,137 +1,179 @@
-'use server';
+"use server";
 
-import { createClient } from '@/utils/supabase/server';
-import { getServerRole } from '@/utils/auth-server';
+import { createClient } from "./supabase/server";
+import { revalidatePath } from "next/cache";
+import { getServerRole } from "./auth-server";
 
-export async function submitMentorAvailability(dates) {
-  try {
-    const supabase = await createClient();
-    const { role, user } = await getServerRole();
-    
-    // In dev mode or without a registered mentor profile, we simulate success
-    if (!user || user.role === 'dev_mentor') {
-      console.log('Dev mode: Submitted dates', dates);
-      return { success: true, message: 'Dates submitted for approval (Dev Mode).' };
-    }
-
-    // Usually we would map user.id to mentors.id
-    // For now, we assume a direct action or update the profile's linked mentor record
-    // Since we don't have a direct link in the schema yet, we update profiles or mentors
-    // We will simulate the DB action
-    
-    // Let's pretend we have a mentor record:
-    // const { error } = await supabase.from('mentors').update({ availability: dates }).eq('email', user.email);
-    
-    return { success: true, message: 'Dates successfully submitted for admin approval.' };
-  } catch (error) {
-    console.error('Error submitting availability:', error);
-    return { success: false, error: 'Failed to submit availability.' };
+/**
+ * Fetch mentor availability
+ */
+export async function getMentorAvailability(profileId) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('mentor_availability')
+    .select('*')
+    .eq('profile_id', profileId);
+  
+  if (error) {
+    console.error('Error fetching availability:', error.message);
+    return [];
   }
+  return data;
 }
 
-export async function getMentorFeedback() {
-  try {
-    const supabase = await createClient();
-    const { role, user } = await getServerRole();
+/**
+ * Update mentor availability (block/unblock dates)
+ */
+export async function updateMentorAvailability(profileId, date, type, reason = '') {
+  const supabase = await createClient();
+  
+  const { error } = await supabase
+    .from('mentor_availability')
+    .upsert([{ 
+      profile_id: profileId, 
+      date, 
+      type, 
+      reason,
+      updated_at: new Date().toISOString()
+    }], { onConflict: 'profile_id, date' });
 
-    // Query feedback -> sessions -> session_mentors
-    const { data: feedbackData, error } = await supabase
-      .from('feedback')
-      .select(`
+  if (error) {
+    console.error('Error updating availability:', error.message);
+    return { success: false, error: error.message };
+  }
+  
+  revalidatePath('/mentor-dashboard');
+  return { success: true };
+}
+
+/**
+ * Fetch schools assigned to this mentor
+ */
+export async function getAssignedSchools(profileId) {
+  const supabase = await createClient();
+  
+  // Link: profiles -> session_mentors -> sessions -> schools
+  const { data, error } = await supabase
+    .from('session_mentors')
+    .select(`
+      session_id,
+      sessions (
         id,
-        rating_saying_no,
-        rating_boundaries,
-        rating_confidential_sharing,
-        comments,
-        created_at,
-        sessions (
-          session_date,
-          start_time,
-          schools (
-            name
-          )
+        session_date,
+        session_type,
+        schools (
+          id,
+          name,
+          district,
+          status
         )
-      `)
-      .order('created_at', { ascending: false })
-      .limit(10);
+      )
+    `)
+    .eq('mentor_id', profileId);
 
-    if (error) {
-      console.error('Error fetching feedback:', error.message);
-      return [];
-    }
-
-    // If no data, return fallback
-    if (!feedbackData || feedbackData.length === 0) {
-      return fallbackFeedback;
-    }
-
-    // Map DB data to frontend shape
-    return feedbackData.map(item => {
-      // average rating from the specific module inputs
-      const ratings = [
-        item.rating_saying_no, 
-        item.rating_boundaries, 
-        item.rating_confidential_sharing
-      ].filter(r => r != null);
-      
-      const avg = ratings.length > 0 
-        ? ratings.reduce((a,b)=>a+b, 0) / ratings.length 
-        : null;
-
-      return {
-        id: item.id,
-        school: item.sessions?.schools?.name || 'Unknown School',
-        module: 'Custom Session', // We could join module_assignments for this
-        date: item.sessions?.session_date || item.created_at.split('T')[0],
-        time: item.sessions?.start_time || '10:00 AM',
-        rating: avg ? parseFloat(avg.toFixed(1)) : null,
-        comments: item.comments || 'No comments provided.',
-        feedbackSubmitted: true
-      };
-    });
-  } catch (error) {
-    console.error('Failed to get feedback', error);
-    return fallbackFeedback;
+  if (error) {
+    console.error('Error fetching schools:', error.message);
+    return [];
   }
+
+  // Deduplicate and format
+  const schools = {};
+  data.forEach(item => {
+    const school = item.sessions?.schools;
+    if (school && !schools[school.id]) {
+      schools[school.id] = {
+        ...school,
+        next_session: item.sessions.session_date,
+        type: item.sessions.session_type
+      };
+    }
+  });
+
+  return Object.values(schools);
 }
 
-const fallbackFeedback = [
-  { school: "Kongu Vellalar Matric", module: "A3-B2", date: "2026-03-28", time: "10:00 AM", rating: 4.5, comments: "The mentor was very engaging and explained boundaries clearly.", feedbackSubmitted: true },
-  { school: "JKKN Public School", module: "A2-B1", date: "2026-03-25", time: "02:00 PM", rating: 4.8, comments: "Amazing session! I learned a lot about saying no.", feedbackSubmitted: true },
-  { school: "Govt. Girls Hr Sec", module: "A2-B3", date: "2026-03-20", time: "09:30 AM", rating: null, comments: null, feedbackSubmitted: false },
-];
+/**
+ * Fetch mentor interactions (anonymous messages)
+ */
+export async function getMentorInteractions(mentorId) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('anonymous_interactions')
+    .select(`
+      *,
+      schools ( name )
+    `)
+    .eq('mentor_id', mentorId)
+    .order('created_at', { ascending: false });
 
-export async function createSession(formData) {
-  const title = formData.get("title");
-  const description = formData.get("description");
-  const scheduled_at = formData.get("scheduled_at");
-  const mentor_id = formData.get("mentor_id");
-
-  try {
-    const supabase = await createClient();
-    const { data: session, error } = await supabase
-      .from("sessions")
-      .insert([{ 
-        title, 
-        description, 
-        session_date: scheduled_at.split('T')[0], 
-        start_time: scheduled_at.split('T')[1] 
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    if (mentor_id) {
-      await supabase
-        .from("session_mentors")
-        .insert([{ session_id: session.id, mentor_id }]);
-    }
-
-    // Assume revalidate is needed on mentor dashboard
-    return { success: true, session };
-  } catch (err) {
-    console.error("Create session error:", err);
-    return { error: err.message || "Failed to create session." };
+  if (error) {
+    console.error('Error fetching interactions:', error.message);
+    return [];
   }
+  return data;
+}
+
+/**
+ * Submit an anonymous interaction (Student side)
+ */
+export async function submitInteraction(mentorId, schoolId, message) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('anonymous_interactions')
+    .insert([{
+      mentor_id: mentorId,
+      school_id: schoolId,
+      message,
+      sender_type: 'student'
+    }]);
+
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
+/**
+ * Fetch feedback analytics for a specific mentor
+ */
+export async function getMentorFeedbackStats(mentorId) {
+  const supabase = await createClient();
+  
+  // Get all session IDs for this mentor
+  const { data: sessionLinks, error: linkError } = await supabase
+    .from('session_mentors')
+    .select('session_id')
+    .eq('mentor_id', mentorId);
+
+  if (linkError || !sessionLinks) return [];
+  const sessionIds = sessionLinks.map(l => l.session_id);
+
+  // Get feedback for those sessions
+  const { data: feedback, error: feedError } = await supabase
+    .from('feedback')
+    .select(`
+      *,
+      sessions (
+        session_date,
+        schools ( name )
+      )
+    `)
+    .in('session_id', sessionIds)
+    .order('created_at', { ascending: false });
+
+  if (feedError) return [];
+
+  return feedback.map(f => ({
+    id: f.id,
+    school: f.sessions?.schools?.name,
+    date: f.sessions?.session_date,
+    comments: f.comments,
+    // Average rating across pillars for the summary card
+    rating: Math.round((
+      (f.rating_saying_no || 5) + 
+      (f.rating_boundaries || 5) + 
+      (f.rating_confidential_sharing || 5) + 
+      (f.rating_suicide_awareness || 5) + 
+      (f.rating_social_media || 5) + 
+      (f.rating_substance_abuse || 5)
+    ) / 6)
+  }));
 }

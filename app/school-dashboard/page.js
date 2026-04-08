@@ -1,43 +1,68 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getDevUser } from "@/utils/auth";
+import { getServerRole } from "@/utils/auth-server";
+import { getSchoolById } from "@/utils/school-actions";
 import Link from 'next/link';
-
-const schoolInfo = {
-  name: "Bharathi Vidya Bhavan",
-  district: "Erode",
-  board: "CBSE",
-  students: 450,
-  moduleCode: "A2-B2",
-  moduleName: "Balanced Core",
-  assessmentStatus: "completed",
-  sessionsCompleted: 2,
-  sessionsRemaining: 1,
-};
-
-const upcomingSessions = [
-  { date: "2026-04-10", time: "10:00 AM", mentor: "Dr. Anitha", type: "Follow-through", module: "A2-B2", status: "confirmed" },
-];
-
-const pastSessions = [
-  { date: "2026-03-28", mentor: "Dr. Anitha", type: "Initial", duration: "90 min", studentFeedback: 42, averageRating: 4.6 },
-  { date: "2026-04-02", mentor: "Sneha V.", type: "Follow-up", duration: "60 min", studentFeedback: 38, averageRating: 4.8 },
-];
 
 export default function SchoolDashboard() {
   const [user, setUser] = useState(null);
+  const [school, setSchool] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    setUser(getDevUser());
+    async function loadData() {
+      // Use internal API or server utility to get role and school_id
+      // For client components, we usually fetch from a route or pass as props, 
+      // but here we'll use a client-side fetch pattern for simplicity in this dev flow.
+      const response = await fetch('/api/auth/me');
+      const data = await response.json();
+      
+      setUser(data.user);
+      
+      if (data.school_id) {
+        const schoolData = await getSchoolById(data.school_id);
+        setSchool(schoolData);
+      }
+      setLoading(false);
+    }
+    
+    loadData();
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
+  if (loading) {
+    return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-tertiary)' }}>Loading dashboard...</div>;
+  }
+
+  if (!school) {
+    return (
+      <div style={{ maxWidth: '600px', margin: '100px auto', textAlign: 'center' }}>
+        <div className="card" style={{ padding: '40px' }}>
+          <div style={{ fontSize: '4rem', marginBottom: '20px' }}>⏳</div>
+          <h1 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '12px' }}>Waiting for Assignment</h1>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: 1.6 }}>
+            Hello {user?.name || 'there'}! Your account has the <strong>School Coordinator</strong> role, but you haven't been assigned to a specific school yet.
+          </p>
+          <div style={{ padding: '16px', background: 'var(--bg-glass)', borderRadius: '12px', border: '1px solid var(--border-subtle)', textAlign: 'left', marginBottom: '24px' }}>
+            <p style={{ fontSize: '13px', margin: 0, color: 'var(--text-tertiary)' }}>
+              <strong>Next Steps:</strong> Please contact the Project Shield Admin to link your account to your school. Once linked, you can start the assessment and scheduling process.
+            </p>
+          </div>
+          <Link href="/" className="btn btn-secondary">Return to Home</Link>
+        </div>
+      </div>
+    );
+  }
+
   const greeting = currentTime.getHours() < 12 ? 'Good Morning' : currentTime.getHours() < 17 ? 'Good Afternoon' : 'Good Evening';
 
-  const completionPercent = Math.round((schoolInfo.sessionsCompleted / (schoolInfo.sessionsCompleted + schoolInfo.sessionsRemaining)) * 100);
+  // Mock data for sessions for now (to be implemented in next step)
+  const upcomingSessions = [];
+  const pastSessions = [];
+  const completionPercent = school.status === 'completed' ? 100 : school.status === 'scheduled' ? 66 : school.status === 'assessed' ? 33 : 0;
 
   return (
     <div>
@@ -66,7 +91,7 @@ export default function SchoolDashboard() {
             {user?.name || 'School Coordinator'}
           </h1>
           <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
-            School dashboard for <strong style={{ color: 'var(--text-secondary)' }}>{schoolInfo.name}</strong>
+            School dashboard for <strong style={{ color: 'var(--text-secondary)' }}>{school.name}</strong>
           </p>
         </div>
       </div>
@@ -88,11 +113,11 @@ export default function SchoolDashboard() {
             fontSize: '2rem', flexShrink: 0
           }}>🏫</div>
           <div style={{ flex: 1 }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px', letterSpacing: '-0.3px' }}>{schoolInfo.name}</h2>
+            <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px', letterSpacing: '-0.3px' }}>{school.name}</h2>
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>📍 {schoolInfo.district}</span>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>📋 {schoolInfo.board}</span>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>👨‍🎓 {schoolInfo.students} students</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>📍 {school.district}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>📋 {school.board}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>👤 {school.contact_person || 'No contact assigned'}</span>
             </div>
           </div>
           <div style={{ textAlign: 'center' }}>
@@ -101,9 +126,9 @@ export default function SchoolDashboard() {
               background: 'var(--primary-glow)', border: '1px solid rgba(99, 102, 241, 0.2)',
               fontWeight: 800, color: 'var(--primary-400)', fontSize: '16px', letterSpacing: '0.5px'
             }}>
-              {schoolInfo.moduleCode}
+              {school.module_code || 'TBD'}
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '4px', fontWeight: 500 }}>{schoolInfo.moduleName}</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '4px', fontWeight: 500 }}>Assigned Module</div>
           </div>
         </div>
 
@@ -115,98 +140,58 @@ export default function SchoolDashboard() {
             <div className="progress-fill" style={{ width: `${completionPercent}%`, background: 'linear-gradient(90deg, #10b981, #34d399)' }}></div>
           </div>
           <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '8px' }}>
-            {schoolInfo.sessionsCompleted} of {schoolInfo.sessionsCompleted + schoolInfo.sessionsRemaining} sessions completed
+             Current Status: <span style={{ color: 'var(--text-primary)', fontWeight: 600, textTransform: 'capitalize' }}>{school.status}</span>
           </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '28px' }}>
-        <div className="stat-card amber">
-          <div className="stat-card-header">
-            <div className="stat-card-icon">📅</div>
-          </div>
-          <div className="stat-card-value">{upcomingSessions.length}</div>
-          <div className="stat-card-label">Upcoming Sessions</div>
-        </div>
-        <div className="stat-card emerald">
-          <div className="stat-card-header">
-            <div className="stat-card-icon">✅</div>
-          </div>
-          <div className="stat-card-value">{pastSessions.length}</div>
-          <div className="stat-card-label">Sessions Completed</div>
-        </div>
-        <div className="stat-card indigo">
-          <div className="stat-card-header">
-            <div className="stat-card-icon">💬</div>
-          </div>
-          <div className="stat-card-value">{pastSessions.reduce((a, s) => a + s.studentFeedback, 0)}</div>
-          <div className="stat-card-label">Student Feedback Count</div>
         </div>
       </div>
 
       <div className="content-grid">
-        {/* Upcoming Session */}
+        {/* Next Step Card */}
         <div className="card" style={{ animation: 'fadeInUp 0.5s ease-out 0.15s both' }}>
           <div className="section-header">
-            <h2 className="section-title">📅 Next Session</h2>
+            <h2 className="section-title">🎯 Next Step</h2>
           </div>
-          {upcomingSessions.length > 0 ? (
-            <div style={{
-              padding: '20px',
-              borderRadius: 'var(--radius-lg)',
-              background: 'var(--bg-glass)',
-              border: '1px solid var(--border-subtle)'
-            }}>
-              {upcomingSessions.map((s, i) => (
-                <div key={i}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '16px', color: 'var(--text-primary)' }}>{s.date}</div>
-                    <span className="badge badge-success">✓ {s.status}</span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    <div>🕐 <strong>{s.time}</strong></div>
-                    <div>👤 Mentor: <strong>{s.mentor}</strong></div>
-                    <div>📋 Type: <span className="badge badge-primary" style={{ fontSize: '11px' }}>{s.type}</span></div>
-                    <div>🎯 Module: <span style={{ color: 'var(--primary-400)', fontWeight: 700 }}>{s.module}</span></div>
-                  </div>
-                </div>
-              ))}
+          {school.status === 'registered' ? (
+            <div style={{ padding: '10px' }}>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
+                The first step of the program is to complete the <strong>School Assessment</strong>. This questionnaire helps us understand your school's demographic and behavioral needs to assign the most effective awareness module.
+              </p>
+              <Link href="/school-dashboard/assessment" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                Start Assessment →
+              </Link>
+            </div>
+          ) : school.status === 'assessed' ? (
+            <div style={{ padding: '10px' }}>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
+                 Assessment complete! Your school has been assigned module <strong>{school.module_code}</strong>. Please coordinate with Admin to schedule your sessions.
+              </p>
+              <Link href="/schedule" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                View Schedule →
+              </Link>
             </div>
           ) : (
-            <div className="empty-state">
-              <div className="empty-state-icon">📅</div>
-              <div className="empty-state-text">No upcoming sessions</div>
+            <div style={{ padding: '10px' }}>
+                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
+                    Follow your active schedule and collect feedback after each session.
+                </p>
+                <Link href="/feedback" className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
+                    View Feedback Dashboard
+                </Link>
             </div>
           )}
         </div>
 
-        {/* Quick Actions for School */}
+        {/* Quick Actions */}
         <div className="card" style={{ animation: 'fadeInUp 0.5s ease-out 0.2s both' }}>
           <div className="section-header">
             <h2 className="section-title">⚡ Quick Actions</h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <Link href="/school-dashboard/assessment" style={{ textDecoration: 'none' }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '14px',
-                padding: '16px', borderRadius: 'var(--radius-md)',
-                background: 'linear-gradient(135deg, var(--primary-glow) 0%, rgba(99, 102, 241, 0.05) 100%)', 
-                border: '1px solid var(--primary-400)',
-                cursor: 'pointer', textAlign: 'left', width: '100%',
-                transition: 'all 0.2s', color: 'inherit'
-              }}>
-                <span style={{ fontSize: '24px' }}>📝</span>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: '14px', color: 'var(--primary-400)', marginBottom: '2px' }}>Take Assessment & Schedule</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Complete questionnaire to receive Module Matrix</div>
-                </div>
-              </div>
-            </Link>
             {[
-              { icon: '📊', label: 'Student Feedback Report', desc: 'View aggregated student responses', color: 'var(--success-400)' },
-              { icon: '📅', label: 'Request Schedule Change', desc: 'Submit a scheduling request', color: 'var(--warning-400)' },
-              { icon: '💬', label: 'Contact Admin', desc: 'Send a message to the admin team', color: 'var(--accent-400)' },
+              { icon: '📝', label: 'Update Proile', desc: 'Manage your contact info', color: 'var(--primary-400)' },
+              { icon: '📊', label: 'Student Reports', desc: 'View feedback analytics', color: 'var(--success-400)' },
+              { icon: '📅', label: 'Class Schedule', desc: 'View session dates', color: 'var(--warning-400)' },
+              { icon: '💬', label: 'Support', desc: 'Contact admin team', color: 'var(--accent-400)' },
             ].map((action) => (
               <button key={action.label} style={{
                 display: 'flex', alignItems: 'center', gap: '14px',
@@ -227,43 +212,8 @@ export default function SchoolDashboard() {
             ))}
           </div>
         </div>
-
-        {/* Past Sessions */}
-        <div className="card content-grid-full" style={{ animation: 'fadeInUp 0.5s ease-out 0.25s both' }}>
-          <div className="section-header">
-            <h2 className="section-title">📋 Past Sessions</h2>
-          </div>
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Mentor</th>
-                  <th>Type</th>
-                  <th>Duration</th>
-                  <th>Student Feedback</th>
-                  <th>Avg Rating</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pastSessions.map((session, index) => (
-                  <tr key={index}>
-                    <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>{session.date}</td>
-                    <td>{session.mentor}</td>
-                    <td><span className="badge badge-primary" style={{ fontSize: '11px' }}>{session.type}</span></td>
-                    <td>{session.duration}</td>
-                    <td style={{ fontWeight: 600 }}>{session.studentFeedback} responses</td>
-                    <td>
-                      <span style={{ fontWeight: 700, color: 'var(--warning-400)' }}>{session.averageRating}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}> ★</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
     </div>
   );
 }
+

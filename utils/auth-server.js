@@ -19,12 +19,16 @@ export async function getServerRole() {
       // User is logged in via Google — check their profile role
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, school_id')
         .eq('id', user.id)
         .single();
 
       if (profile && profile.role) {
-        return { role: profile.role, user: { email: user.email, name: user.user_metadata?.full_name, id: user.id, avatar: user.user_metadata?.avatar_url } };
+        return { 
+          role: profile.role, 
+          school_id: profile.school_id,
+          user: { email: user.email, name: user.user_metadata?.full_name, id: user.id, avatar: user.user_metadata?.avatar_url } 
+        };
       }
 
       // No profile yet — auto-assign admin for the designated email
@@ -38,7 +42,11 @@ export async function getServerRole() {
           updated_at: new Date().toISOString(),
         }, { onConflict: 'id' });
 
-        return { role: 'admin', user: { email: user.email, name: user.user_metadata?.full_name, id: user.id, avatar: user.user_metadata?.avatar_url } };
+        return { 
+          role: 'admin', 
+          school_id: null,
+          user: { email: user.email, name: user.user_metadata?.full_name, id: user.id, avatar: user.user_metadata?.avatar_url } 
+        };
       }
 
       // User exists but no profile — create one with 'unassigned'
@@ -50,7 +58,11 @@ export async function getServerRole() {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'id' });
 
-      return { role: 'unassigned', user: { email: user.email, name: user.user_metadata?.full_name, id: user.id, avatar: user.user_metadata?.avatar_url } };
+      return { 
+        role: 'unassigned', 
+        school_id: null,
+        user: { email: user.email, name: user.user_metadata?.full_name, id: user.id, avatar: user.user_metadata?.avatar_url } 
+      };
     }
   } catch (e) {
     // Supabase not available — fall through to dev mode
@@ -66,8 +78,12 @@ export async function getServerRole() {
         user = JSON.parse(decodeURIComponent(devUser.value));
       } catch {}
     }
-    return { role: devRole.value, user };
+    return { 
+      role: devRole.value, 
+      school_id: cookieStore.get('dev_school_id')?.value || null,
+      user 
+    };
   }
 
-  return { role: null, user: null };
+  return { role: null, school_id: null, user: null };
 }

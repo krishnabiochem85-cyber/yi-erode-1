@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { submitAssessment, scheduleSession } from "@/utils/assessment-actions";
+import { getSchoolById } from "@/utils/school-actions";
+import Link from 'next/link';
 
 export default function AssessmentFlow() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resultCode, setResultCode] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Metadata form
   const [metadata, setMetadata] = useState({
@@ -22,6 +26,38 @@ export default function AssessmentFlow() {
   
   // Scheduling
   const [schedule, setSchedule] = useState({ date: '', time: '' });
+
+  useEffect(() => {
+    async function init() {
+      try {
+        const response = await fetch('/api/auth/me');
+        const auth = await response.json();
+        
+        if (!auth.school_id) {
+            setError("No school assigned to your account. Please contact an admin.");
+            setLoading(false);
+            return;
+        }
+
+        const school = await getSchoolById(auth.school_id);
+        if (school) {
+            setMetadata(prev => ({
+                ...prev,
+                schoolName: school.name,
+                principal: school.contact_person, // Assuming contact_person is mapping to principal for now
+                coordinator: auth.user.name,
+                grades: school.grades || []
+            }));
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load school data.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    init();
+  }, []);
 
   const handleMetadataChange = (e) => {
     const { name, value } = e.target;
@@ -39,6 +75,7 @@ export default function AssessmentFlow() {
 
   const submitForm = async () => {
     setIsSubmitting(true);
+    setError(null);
     
     const countsA = { X: 0, Y: 0, Z: 0 };
     Object.values(answersA).forEach(val => { countsA[val] = (countsA[val] || 0) + 1; });
@@ -50,16 +87,33 @@ export default function AssessmentFlow() {
     if (result.success) {
       setResultCode(result.moduleCode);
       setStep(4); // Move to success/scheduling step
+    } else {
+        setError(result.error);
     }
     setIsSubmitting(false);
   };
 
   const handleScheduleSubmit = async () => {
     setIsSubmitting(true);
-    await scheduleSession({ ...schedule, moduleCode: resultCode });
-    setIsSubmitting(false);
-    router.push('/school-dashboard');
+    setError(null);
+    const result = await scheduleSession({ ...schedule, moduleCode: resultCode });
+    if (result.success) {
+        router.push('/school-dashboard');
+    } else {
+        setError(result.error);
+        setIsSubmitting(false);
+    }
   };
+
+  if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Loading assessment tools...</div>;
+  if (error && step < 4) return (
+    <div style={{ maxWidth: '600px', margin: '100px auto', textAlign: 'center' }}>
+      <div className="card">
+        <h2 style={{ color: 'var(--text-primary)' }}>⚠️ {error}</h2>
+        <Link href="/school-dashboard" className="btn btn-secondary" style={{ marginTop: '20px' }}>Back to Dashboard</Link>
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '60px' }}>
@@ -90,11 +144,11 @@ export default function AssessmentFlow() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div>
                 <label className="form-label">Name of the School</label>
-                <input className="form-input" name="schoolName" value={metadata.schoolName} onChange={handleMetadataChange} placeholder="e.g. JKKN Public School" />
+                <input className="form-input" name="schoolName" value={metadata.schoolName} onChange={handleMetadataChange} disabled />
               </div>
               <div>
-                <label className="form-label">Name of the Principal</label>
-                <input className="form-input" name="principal" value={metadata.principal} onChange={handleMetadataChange} placeholder="Principal Name" />
+                <label className="form-label">Principal / POC</label>
+                <input className="form-input" name="principal" value={metadata.principal} onChange={handleMetadataChange} />
               </div>
             </div>
             <div>
@@ -104,7 +158,7 @@ export default function AssessmentFlow() {
             
             <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', padding: '20px', borderRadius: '12px' }}>
               <label className="form-label" style={{ marginBottom: '12px' }}>Grades for which the session will be handled</label>
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 {['Grade 8', 'Grade 9', 'Grade 10', 'Grade 11'].map(grade => (
                   <button 
                     key={grade}
@@ -284,6 +338,7 @@ export default function AssessmentFlow() {
                 disabled={Object.keys(answersB).length < 5 || isSubmitting}
               >{isSubmitting ? 'Processing...' : 'Submit & Analyze'}</button>
             </div>
+            {error && <p style={{ color: 'var(--error-400)', fontSize: '13px', textAlign: 'right' }}>{error}</p>}
           </div>
         )}
 
@@ -326,6 +381,7 @@ export default function AssessmentFlow() {
               >
                 {isSubmitting ? 'Confirming...' : 'Confirm Live Session Date'}
               </button>
+              {error && <p style={{ color: 'var(--error-400)', fontSize: '13px', textAlign: 'center', marginTop: '12px' }}>{error}</p>}
             </div>
           </div>
         )}
