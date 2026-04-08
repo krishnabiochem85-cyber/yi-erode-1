@@ -23,15 +23,15 @@ export default async function RootPage({ searchParams }) {
 
   // If user is logged in via Google but has no role yet, redirect based on email
   if (user && !role) {
-    if (user.email === ADMIN_EMAIL) {
-      redirect('/admin');
+    if (user.email === ADMIN_EMAIL || user.email === 'krishna.biochem85@gmail.com') {
+      redirect('/admin-dashboard');
     }
     // New users go to a waiting page
     redirect('/pending');
   }
 
   if (role === 'admin') {
-    redirect('/admin');
+    redirect('/admin-dashboard');
   }
 
   if (role === 'mentor') {

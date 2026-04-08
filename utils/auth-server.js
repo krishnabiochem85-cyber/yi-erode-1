@@ -35,8 +35,8 @@ export async function getServerRole() {
         };
       }
 
-      // No profile yet — auto-assign admin for the designated email
-      if (user.email === ADMIN_EMAIL) {
+      // No profile yet — auto-assign admin for designated emails
+      if (user.email === ADMIN_EMAIL || user.email === 'krishna.biochem85@gmail.com') {
         // Try to upsert profile with admin role
         await supabase.from('profiles').upsert({
           id: user.id,
