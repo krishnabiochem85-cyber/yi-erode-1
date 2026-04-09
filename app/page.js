@@ -42,11 +42,15 @@ export default async function RootPage({ searchParams }) {
     redirect('/school-dashboard');
   }
 
+  if (role === 'student') {
+    redirect('/student-dashboard');
+  }
+
   // Handle unassigned role
   if (role === 'unassigned') {
     redirect('/pending');
   }
 
-  // Fallback for unassigned
-  redirect('/pending');
+  // Fallback
+  redirect('/login');
 }

@@ -71,8 +71,8 @@ export default async function AdminRolesPage() {
         color: 'var(--text-secondary)',
         lineHeight: 1.6,
       }}>
-        <strong style={{ color: 'var(--primary-400)' }}>How it works:</strong> When a user signs in with Google, they appear here as &quot;Unassigned&quot;. 
-        Use the dropdown to assign them as <strong style={{ color: '#ef4444' }}>Admin</strong>, <strong style={{ color: '#10b981' }}>Mentor</strong>, or <strong style={{ color: '#f59e0b' }}>School Coordinator</strong>. 
+        <strong style={{ color: 'var(--primary-400)' }}>How it works:</strong> When a user signs in with Google, they are automatically assigned as a <strong style={{ color: 'var(--primary-400)' }}>Student</strong>. 
+        Use the dropdown to upgrade them or change their permissions. 
         Changes take effect on their next page load.
       </div>
 

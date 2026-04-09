@@ -10,6 +10,7 @@ const devRoles = [
   { id: 'admin', label: 'Admin (Dev)', icon: '🔐', desc: 'Preview admin dashboard', color: '#818cf8' },
   { id: 'mentor', label: 'Mentor (Dev)', icon: '👤', desc: 'Preview mentor dashboard', color: '#34d399' },
   { id: 'school_coordinator', label: 'Coordinator (Dev)', icon: '🏫', desc: 'Preview school dashboard', color: '#fbbf24' },
+  { id: 'student', label: 'Student (Dev)', icon: '🎓', desc: 'Preview student dashboard', color: '#6366f1' },
 ];
 
 export default function LoginPage() {
@@ -37,8 +38,9 @@ export default function LoginPage() {
     setSelectedRole(role);
     setDevRole(role);
     setTimeout(() => {
-      if (role === 'admin') router.push('/admin');
+      if (role === 'admin') router.push('/admin-dashboard');
       else if (role === 'mentor') router.push('/mentor-dashboard');
+      else if (role === 'student') router.push('/student-dashboard');
       else router.push('/school-dashboard');
     }, 500);
   };

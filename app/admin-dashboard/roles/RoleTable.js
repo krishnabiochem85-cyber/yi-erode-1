@@ -27,6 +27,11 @@ export default function RoleTable({ initialProfiles }) {
     if (newRole !== 'school_coordinator') {
       updates.school_id = null;
     }
+    // If switching AWAY from student, clear mentor info
+    if (newRole !== 'student') {
+      updates.assigned_mentor_id = null;
+      updates.mentor_change_status = 'none';
+    }
 
     const { error } = await supabase
       .from('profiles')
@@ -36,7 +41,28 @@ export default function RoleTable({ initialProfiles }) {
     if (error) {
       alert(`Failed to update role: ${error.message}`);
     } else {
-      setProfiles(profiles.map(p => p.id === profileId ? { ...p, role: newRole, school_id: updates.school_id } : p));
+      setProfiles(profiles.map(p => p.id === profileId ? { ...p, ...updates } : p));
+      setSuccessId(profileId);
+      setTimeout(() => setSuccessId(null), 2000);
+    }
+    setLoadingId(null);
+  };
+
+  const handleResetMentor = async (profileId) => {
+    setLoadingId(profileId);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        assigned_mentor_id: null, 
+        mentor_change_status: 'none',
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', profileId);
+      
+    if (error) {
+      alert(`Failed to reset mentor: ${error.message}`);
+    } else {
+      setProfiles(profiles.map(p => p.id === profileId ? { ...p, assigned_mentor_id: null, mentor_change_status: 'none' } : p));
       setSuccessId(profileId);
       setTimeout(() => setSuccessId(null), 2000);
     }
@@ -74,6 +100,7 @@ export default function RoleTable({ initialProfiles }) {
     admin: { bg: 'rgba(239, 68, 68, 0.08)', border: 'rgba(239, 68, 68, 0.2)', text: '#ef4444', label: 'Administrator' },
     school_coordinator: { bg: 'rgba(245, 158, 11, 0.08)', border: 'rgba(245, 158, 11, 0.2)', text: '#f59e0b', label: 'Coordinator' },
     mentor: { bg: 'rgba(16, 185, 129, 0.08)', border: 'rgba(16, 185, 129, 0.2)', text: '#10b981', label: 'Mentor' },
+    student: { bg: 'rgba(99, 102, 241, 0.08)', border: 'rgba(99, 102, 241, 0.2)', text: '#6366f1', label: 'Student' },
     unassigned: { bg: 'rgba(113, 113, 122, 0.08)', border: 'rgba(113, 113, 122, 0.2)', text: '#71717a', label: 'Unassigned' },
   };
 
@@ -171,6 +198,7 @@ export default function RoleTable({ initialProfiles }) {
                             <option value="admin">🔐 Administrator</option>
                             <option value="school_coordinator">🏫 School Coordinator</option>
                             <option value="mentor">👤 Mentor</option>
+                            <option value="student">🎓 Student</option>
                             <option value="unassigned">⏳ Unassigned</option>
                           </select>
                           {loadingId === profile.id && (
@@ -209,6 +237,38 @@ export default function RoleTable({ initialProfiles }) {
                                  );
                                })}
                              </select>
+                          </div>
+                        )}
+
+                        {profile.role === 'student' && profile.mentor_change_status === 'requested' && (
+                          <div style={{ 
+                            marginTop: '8px', 
+                            padding: '10px', 
+                            background: 'rgba(245, 158, 11, 0.05)', 
+                            border: '1px solid rgba(245, 158, 11, 0.2)', 
+                            borderRadius: '8px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '8px'
+                          }}>
+                            <div style={{ fontSize: '11px', color: 'var(--warning-500)', fontWeight: 600 }}>
+                              ⚠️ MENTOR CHANGE REQUESTED
+                            </div>
+                            <button
+                              onClick={() => handleResetMentor(profile.id)}
+                              disabled={loadingId === profile.id}
+                              style={{
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                background: 'var(--warning-500)',
+                                color: 'white',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Approve & Reset Mentor
+                            </button>
                           </div>
                         )}
                       </div>

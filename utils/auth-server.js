@@ -53,17 +53,17 @@ export async function getServerRole() {
         };
       }
 
-      // User exists but no profile — create one with 'unassigned'
+      // User exists but no profile — create one with 'student'
       await supabase.from('profiles').upsert({
         id: user.id,
         full_name: user.user_metadata?.full_name || user.email,
         avatar_url: user.user_metadata?.avatar_url,
-        role: 'unassigned',
+        role: 'student',
         updated_at: new Date().toISOString(),
       }, { onConflict: 'id' });
 
       return { 
-        role: 'unassigned', 
+        role: 'student', 
         school_id: null,
         user: { 
           email: user.email, 
