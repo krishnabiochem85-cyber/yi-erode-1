@@ -14,7 +14,7 @@ export default async function AdminRolesPage() {
   
   if (role !== 'admin') {
     return (
-      <div style={{ padding: '2rem' }}>
+      <div className="main-content">
         <h1 style={{ color: '#ef4444', fontSize: '24px', fontWeight: 700 }}>Access Denied</h1>
         <p style={{ color: 'var(--text-secondary)' }}>You must be an Administrator to manage roles.</p>
       </div>
@@ -42,7 +42,7 @@ export default async function AdminRolesPage() {
   }
 
   return (
-    <div>
+    <div className="main-content">
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
         marginBottom: '28px', flexWrap: 'wrap', gap: '1rem'
