@@ -1,10 +1,25 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    async function getRole() {
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        setRole(data.role);
+      } catch (err) {
+        console.error("Layout role fetch error:", err);
+      }
+    }
+    getRole();
+  }, []);
 
   return (
     <div className="app-layout">
@@ -40,6 +55,13 @@ export default function AdminLayout({ children }) {
             <span className="sidebar-icon">➕</span>
             Add Mentor
           </Link>
+
+          {role === 'admin' && (
+            <Link href="/admin-dashboard/roles" className={`sidebar-link ${pathname === "/admin-dashboard/roles" ? "active" : ""}`}>
+              <span className="sidebar-icon">🔑</span>
+              Manage Roles
+            </Link>
+          )}
         </nav>
       </aside>
 
