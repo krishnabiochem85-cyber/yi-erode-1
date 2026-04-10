@@ -2,6 +2,7 @@
 
 import { createClient } from "./supabase/server";
 import { revalidatePath } from "next/cache";
+import { logActivity } from "./logger";
 
 /**
  * Fetch all schools from the database
@@ -48,6 +49,8 @@ export async function registerSchool(formData) {
     return { success: false, error: error.message };
   }
 
+  await logActivity('Registered School', `Registered ${schoolData.name} located in ${schoolData.district}`);
+
   revalidatePath('/schools');
   return { success: true, data };
 }
@@ -71,6 +74,8 @@ export async function assignSchoolToProfile(profileId, schoolId) {
     console.error('Error assigning school:', error.message);
     return { success: false, error: error.message };
   }
+
+  await logActivity('Assigned School Coordinator', `Profile ${profileId} mapped to school ID ${schoolId}`);
 
   revalidatePath('/admin/roles');
   return { success: true };

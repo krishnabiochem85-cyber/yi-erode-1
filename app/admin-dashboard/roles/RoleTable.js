@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { getSchools } from '@/utils/school-actions';
+import { logActivity } from '@/utils/logger';
 
 export default function RoleTable({ initialProfiles }) {
   const [profiles, setProfiles] = useState(initialProfiles);
@@ -43,6 +44,7 @@ export default function RoleTable({ initialProfiles }) {
     } else {
       setProfiles(profiles.map(p => p.id === profileId ? { ...p, ...updates } : p));
       setSuccessId(profileId);
+      await logActivity('Changed Role', `Updated user ${profileId} role to ${newRole}`);
       setTimeout(() => setSuccessId(null), 2000);
     }
     setLoadingId(null);
@@ -91,6 +93,7 @@ export default function RoleTable({ initialProfiles }) {
     } else {
       setProfiles(profiles.map(p => p.id === profileId ? { ...p, school_id: schoolId === 'none' ? null : schoolId } : p));
       setSuccessId(profileId);
+      await logActivity('Assigned School Coordinator', `Assigned user ${profileId} to school ${schoolId}`);
       setTimeout(() => setSuccessId(null), 2000);
     }
     setLoadingId(null);

@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "./supabase/server";
+import { revalidatePath } from "next/cache";
+import { logActivity } from "./logger";
 
 /**
  * Fetch top-level dashboard statistics
@@ -85,6 +87,8 @@ export async function addMentor(formData) {
     console.error('Error adding mentor:', error.message);
     return { error: error.message };
   }
+
+  await logActivity('Added New Mentor', `Manually registered mentor profile for ${mentorData.full_name}`);
 
   revalidatePath('/admin-dashboard');
   revalidatePath('/mentors');

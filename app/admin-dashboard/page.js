@@ -3,22 +3,26 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getAdminDashboardStats } from "@/utils/admin-actions";
+import { getRecentActivities } from "@/utils/logger";
 
 export default function AdminOverviewPage() {
   const [stats, setStats] = useState({ totalSchools: 0, activeModules: 0, mentors: 0, responses: 0 });
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activities, setActivities] = useState([]);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [authRes, statsData] = await Promise.all([
+        const [authRes, statsData, logs] = await Promise.all([
           fetch('/api/auth/me').then(r => r.json()),
-          getAdminDashboardStats()
+          getAdminDashboardStats(),
+          getRecentActivities(15)
         ]);
         
         setUser(authRes.user);
         setStats(statsData);
+        setActivities(logs || []);
       } catch (err) {
         console.error("Error loading admin stats:", err);
       } finally {
@@ -112,6 +116,62 @@ export default function AdminOverviewPage() {
             <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>Assign roles and access levels</p>
           </div>
         </Link>
+      </div>
+
+      {/* Activity Feed Section */}
+      <div className="section-header" style={{ marginTop: "40px", marginBottom: "20px" }}>
+        <h2 className="section-title">Recent Activity Feed</h2>
+      </div>
+
+      <div className="card" style={{ padding: "0" }}>
+        {activities.length === 0 ? (
+          <div style={{ padding: "40px", textAlign: "center", color: "var(--text-tertiary)", fontSize: "14px" }}>
+            No recent platform activity.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {activities.map((activity, index) => (
+              <div 
+                key={activity.id} 
+                style={{ 
+                  padding: "16px 24px", 
+                  borderBottom: index !== activities.length - 1 ? "1px solid var(--border-subtle)" : "none",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "16px"
+                }}
+              >
+                <div style={{ 
+                  width: "40px", 
+                  height: "40px", 
+                  borderRadius: "50%", 
+                  background: "var(--bg-secondary)", 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center",
+                  fontSize: "18px"
+                }}>
+                  {activity.action.includes('School') ? '🏫' : activity.action.includes('Role') ? '🔑' : activity.action.includes('Mentor') ? '👤' : '⚡'}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                    <div style={{ fontWeight: 600, fontSize: "14px", color: "var(--text-primary)" }}>
+                      {activity.user_name} <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>{activity.action}</span>
+                    </div>
+                    <div style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>
+                      {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "numeric" }).format(new Date(activity.created_at))}
+                    </div>
+                  </div>
+                  {activity.details && (
+                    <div style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                      {activity.details}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
