@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getStudentData, chooseMentor, requestMentorChange } from "@/utils/student-actions";
+import { getStudentData, chooseMentor, requestMentorChange, chooseSchool } from "@/utils/student-actions";
 import { getAllMentorsWithAllocations } from "@/utils/admin-mentor-actions";
+import { getSchools } from "@/utils/school-actions";
 import Link from "next/link";
 
 const QUOTES = [
@@ -17,6 +18,7 @@ const QUOTES = [
 export default function StudentDashboard() {
   const [data, setData] = useState(null);
   const [mentors, setMentors] = useState([]);
+  const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [quote, setQuote] = useState(QUOTES[0]);
   const [actionStatus, setActionStatus] = useState(null);
@@ -28,9 +30,10 @@ export default function StudentDashboard() {
 
     async function loadData() {
       try {
-        const [studentRes, mentorsRes] = await Promise.all([
+        const [studentRes, mentorsRes, schoolsRes] = await Promise.all([
           getStudentData(),
-          getAllMentorsWithAllocations()
+          getAllMentorsWithAllocations(),
+          getSchools()
         ]);
         
         if (studentRes.error) {
@@ -38,7 +41,8 @@ export default function StudentDashboard() {
         } else {
           setData(studentRes.profile);
         }
-        setMentors(mentorsRes);
+        setMentors(mentorsRes || []);
+        setSchools(schoolsRes || []);
       } catch (err) {
         console.error("Dashboard load error:", err);
       } finally {
@@ -47,6 +51,24 @@ export default function StudentDashboard() {
     }
     loadData();
   }, []);
+
+  const handleChooseSchool = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const schoolId = formData.get('school_id');
+    if (!schoolId) return;
+
+    setActionStatus("choosing");
+    const result = await chooseSchool(schoolId);
+    if (result.success) {
+      const updated = await getStudentData();
+      setData(updated.profile);
+      setActionStatus("Success! School assigned.");
+    } else {
+      setActionStatus(`Error: ${result.error}`);
+    }
+    setTimeout(() => setActionStatus(null), 3000);
+  };
 
   const handleChooseMentor = async (mentorId) => {
     setActionStatus("choosing");
@@ -115,8 +137,41 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
-        {/* Profile Card */}
+      {!data.school_id ? (
+        <div className="card" style={{ maxWidth: '800px', margin: '0 auto', padding: 0, overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 0 }}>
+            <div style={{ position: 'relative', minHeight: '280px' }}>
+              <img 
+                src="/mission-on-hero.png" 
+                alt="Mission On" 
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} 
+              />
+            </div>
+            <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div style={{ display: 'inline-block', padding: '6px 12px', background: 'var(--accent-glow)', color: 'var(--accent-400)', borderRadius: '20px', fontSize: '12px', fontWeight: 600, marginBottom: '12px', alignSelf: 'flex-start' }}>
+                Welcome to the Program
+              </div>
+              <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '12px', color: 'var(--text-primary)' }}>
+                Mission On: Smart Choices
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '24px', fontSize: '14px' }}>
+                Young Indians (Yi) Erode Chapter welcomes you to Project Shield. To begin your journey, please select your school from the list below.
+              </p>
+              <form onSubmit={handleChooseSchool} style={{ display: 'flex', gap: '8px' }}>
+                <select name="school_id" className="form-input" style={{ flex: 1 }} required>
+                  <option value="">Select your school...</option>
+                  {schools.map(school => (
+                    <option key={school.id} value={school.id}>{school.name}</option>
+                  ))}
+                </select>
+                <button type="submit" className="btn btn-primary">Join</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
+          {/* Profile Card */}
         <div className="card" style={{ padding: '32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
              <img 
@@ -186,17 +241,29 @@ export default function StudentDashboard() {
                 background: 'var(--bg-glass)',
                 borderRadius: '20px',
                 border: '1px solid var(--primary-glow)',
-                marginBottom: '24px'
+                marginBottom: '24px',
+                flexWrap: 'wrap'
               }}>
                 <img 
                   src={data.mentor?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.mentor?.full_name || 'M')}&background=10b981&color=fff&bold=true`} 
                   alt="Mentor Avatar"
                   style={{ width: '80px', height: '80px', borderRadius: '20px', objectFit: 'cover' }}
                 />
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: '200px' }}>
                   <h3 style={{ fontSize: '22px', fontWeight: 800 }}>{data.mentor?.full_name}</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '12px' }}>Your assigned JKKN mentor</p>
-                  <button className="btn btn-sm btn-primary">Message Mentor</button>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>Your assigned JKKN mentor</p>
+                  
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <Link href={`/student-dashboard/chat/${data.mentor.id}`} className="btn btn-primary btn-sm" style={{ padding: '8px 16px', background: 'var(--gradient-primary)' }}>
+                      💬 Chat Room
+                    </Link>
+                    <a href={`https://wa.me/something`} target="_blank" className="btn btn-secondary btn-sm" style={{ padding: '8px 16px', color: '#10b981', borderColor: '#10b981' }}>
+                      📱 WhatsApp
+                    </a>
+                    <a href={`https://meet.google.com/new`} target="_blank" className="btn btn-secondary btn-sm" style={{ padding: '8px 16px' }}>
+                      🎥 Video Call
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -226,6 +293,7 @@ export default function StudentDashboard() {
           )}
         </div>
       </div>
+      )}
 
       {actionStatus && (
         <div style={{

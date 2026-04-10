@@ -33,6 +33,30 @@ export async function getStudentData() {
 }
 
 /**
+ * Assign a school to a student
+ */
+export async function chooseSchool(schoolId) {
+  const auth = await getServerRole();
+  if (!auth.user || auth.role !== 'student') {
+    return { error: "Unauthorized" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('profiles')
+    .update({ 
+      school_id: schoolId,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', auth.user.id);
+
+  if (error) return { error: error.message };
+  
+  revalidatePath('/student-dashboard');
+  return { success: true };
+}
+
+/**
  * Assign a mentor to a student
  */
 export async function chooseMentor(mentorId) {
