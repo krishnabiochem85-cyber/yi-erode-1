@@ -6,7 +6,7 @@ import { getAdminDashboardStats } from "@/utils/admin-actions";
 import { getRecentActivities } from "@/utils/logger";
 
 export default function AdminOverviewPage() {
-  const [stats, setStats] = useState({ totalSchools: 0, activeModules: 0, mentors: 0, responses: 0 });
+  const [stats, setStats] = useState({ schools: 0, activeUsers: 0, mentors: 0, responses: 0 });
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState([]);
@@ -67,13 +67,21 @@ export default function AdminOverviewPage() {
       <div className="stats-grid">
         <div className="stat-card indigo">
           <div className="stat-card-header">
+            <span className="stat-card-icon">👥</span>
+            <span className="stat-card-badge up">Live</span>
+          </div>
+          <div className="stat-card-value">{loading ? '...' : stats.activeUsers}</div>
+          <div className="stat-card-label">Total Active Users</div>
+        </div>
+        <div className="stat-card purple">
+          <div className="stat-card-header">
             <span className="stat-card-icon">🏫</span>
             <span className="stat-card-badge up">Live</span>
           </div>
-          <div className="stat-card-value">{loading ? '...' : stats.totalSchools}</div>
+          <div className="stat-card-value">{loading ? '...' : stats.schools}</div>
           <div className="stat-card-label">Schools Enrolled</div>
         </div>
-        <div className="stat-card purple">
+        <div className="stat-card emerald">
           <div className="stat-card-header">
             <span className="stat-card-icon">🧑‍⚕️</span>
             <span className="stat-card-badge up">Live</span>
@@ -81,7 +89,7 @@ export default function AdminOverviewPage() {
           <div className="stat-card-value">{loading ? '...' : stats.mentors}</div>
           <div className="stat-card-label">Mentors Available</div>
         </div>
-        <div className="stat-card emerald">
+        <div className="stat-card blue">
           <div className="stat-card-header">
             <span className="stat-card-icon">✅</span>
           </div>

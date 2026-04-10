@@ -12,19 +12,19 @@ export async function getAdminDashboardStats() {
 
   const [
     { count: schoolsCount },
-    { count: modulesCount },
+    { count: usersCount },
     { count: mentorsCount },
     { count: responsesCount }
   ] = await Promise.all([
     supabase.from('schools').select('*', { count: 'exact', head: true }),
-    supabase.from('module_assignments').select('*', { count: 'exact', head: true }),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'mentor'),
     supabase.from('feedback').select('*', { count: 'exact', head: true })
   ]);
 
   return {
     schools: schoolsCount || 0,
-    modules: modulesCount || 0,
+    activeUsers: usersCount || 0,
     mentors: mentorsCount || 0,
     responses: responsesCount || 0
   };
