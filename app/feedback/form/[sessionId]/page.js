@@ -14,7 +14,7 @@ export default function FeedbackFormPage() {
         <div style={{ display: 'inline-flex', width: '48px', height: '48px', alignItems: 'center', justifyContent: 'center', background: 'var(--gradient-primary)', borderRadius: 'var(--radius-sm)', fontSize: '24px', marginBottom: '16px' }}>
           🛡️
         </div>
-        <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>Project Shield Session Feedback</h1>
+        <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>Mission ON - Smart Choices Session Feedback</h1>
         <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Session ID: {params.sessionId}</p>
       </div>
 
@@ -79,7 +79,7 @@ export default function FeedbackFormPage() {
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
             <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--success-400)', marginBottom: '8px' }}>Thank You!</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Your feedback has been submitted successfully and will help us improve Project Shield.</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Your feedback has been submitted successfully and will help us improve Mission ON - Smart Choices.</p>
           </div>
         )}
       </div>

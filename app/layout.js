@@ -3,7 +3,7 @@ import { ThemeProvider } from "./ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const metadata = {
-  title: "Project Shield — YI Erode Chapter",
+  title: "Mission ON - Smart Choices — YI Erode Chapter",
   description: "Substance Abuse Awareness Management Platform by Young Indians Erode Chapter. Manage school assessments, module deployment, mentor allocation, and program feedback.",
 };
 

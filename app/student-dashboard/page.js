@@ -11,7 +11,7 @@ const QUOTES = [
   { text: "Education is the most powerful weapon which you can use to change the world.", author: "Nelson Mandela" },
   { text: "Your choices today will shape your world tomorrow.", author: "Mission On" },
   { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
-  { text: "Every small choice is a step towards a bigger mission.", author: "Project Shield" },
+  { text: "Every small choice is a step towards a bigger mission.", author: "Mission ON" },
   { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" }
 ];
 
@@ -155,7 +155,7 @@ export default function StudentDashboard() {
                 Mission On: Smart Choices
               </h2>
               <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '24px', fontSize: '14px' }}>
-                Young Indians (Yi) Erode Chapter welcomes you to Project Shield. To begin your journey, please select your school from the list below.
+                Young Indians (Yi) Erode Chapter welcomes you to Mission ON - Smart Choices. To begin your journey, please select your school from the list below.
               </p>
               <form onSubmit={handleChooseSchool} style={{ display: 'flex', gap: '8px' }}>
                 <select name="school_id" className="form-input" style={{ flex: 1 }} required>
@@ -189,10 +189,6 @@ export default function StudentDashboard() {
             <Link href="/feedback" className="btn btn-secondary" style={{ textAlign: 'left', padding: '16px' }}>
               <span style={{ marginRight: '12px' }}>📝</span>
               Provide Feedback
-            </Link>
-            <Link href="/modules" className="btn btn-secondary" style={{ textAlign: 'left', padding: '16px' }}>
-              <span style={{ marginRight: '12px' }}>📚</span>
-              Awareness Modules
             </Link>
           </div>
         </div>

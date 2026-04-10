@@ -54,7 +54,7 @@ export default function AdminOverviewPage() {
               Mission On: Smart Choices
             </h2>
             <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '0', fontSize: '14px' }}>
-              Young Indians (Yi) Erode Chapter presents <strong>Project Shield</strong>, a comprehensive awareness program focused on substance abuse prevention. "Mission On" empowers students with tools and mentorship to make safe decisions.
+              Young Indians (Yi) Erode Chapter presents <strong>Mission ON - Smart Choices</strong>, a comprehensive awareness program focused on substance abuse prevention. This initiative empowers students with tools and mentorship to make safe decisions.
             </p>
           </div>
         </div>
@@ -110,13 +110,6 @@ export default function AdminOverviewPage() {
           <div>
             <h3 style={{ margin: 0, fontSize: '16px' }}>Manage User Roles</h3>
             <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>Assign roles and access levels</p>
-          </div>
-        </Link>
-        <Link href="/modules" className="card action-card" style={{ display: "flex", alignItems: "center", gap: "16px", textDecoration: "none" }}>
-          <div className="action-icon">🧩</div>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '16px' }}>Framework Matrix</h3>
-            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>Review the 3x3 module distribution</p>
           </div>
         </Link>
       </div>

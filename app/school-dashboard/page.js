@@ -53,7 +53,7 @@ export default function SchoolDashboard() {
           </p>
           <div style={{ padding: '16px', background: 'var(--bg-glass)', borderRadius: '12px', border: '1px solid var(--border-subtle)', textAlign: 'left', marginBottom: '24px' }}>
             <p style={{ fontSize: '13px', margin: 0, color: 'var(--text-tertiary)' }}>
-              <strong>Next Steps:</strong> Please contact the Project Shield Admin to link your account to your school. Once linked, you can start the assessment and scheduling process.
+              <strong>Next Steps:</strong> Please contact the Mission ON Admin to link your account to your school. Once linked, you can start the assessment and scheduling process.
             </p>
           </div>
           <Link href="/" className="btn btn-secondary">Return to Home</Link>
@@ -158,16 +158,13 @@ export default function SchoolDashboard() {
           {school.status === 'registered' ? (
             <div style={{ padding: '10px' }}>
               <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
-                The first step of the program is to complete the <strong>School Assessment</strong>. This questionnaire helps us understand your school's demographic and behavioral needs to assign the most effective awareness module.
+                Your school is successfully registered. Please wait for the Mission ON Admin to assign an appropriate awareness module before scheduling can begin.
               </p>
-              <Link href="/school-dashboard/assessment" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-                Start Assessment →
-              </Link>
             </div>
           ) : school.status === 'assessed' ? (
             <div style={{ padding: '10px' }}>
               <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
-                 Assessment complete! Your school has been assigned module <strong>{school.module_code}</strong>. Please coordinate with Admin to schedule your sessions.
+                 Module assignment complete! Your school has been assigned module <strong>{school.module_code}</strong>. Please coordinate with Admin to schedule your sessions.
               </p>
               <Link href="/schedule" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
                 View Schedule →

@@ -55,7 +55,6 @@ const schoolNav = [
   {
     section: 'School',
     items: [
-      { href: '/assessments', label: 'Assessment', icon: '📝' },
       { href: '/schedule', label: 'Sessions', icon: '📅' },
       { href: '/feedback', label: 'Feedback', icon: '💬' },
     ]
@@ -72,7 +71,6 @@ const studentNav = [
   {
     section: 'Program',
     items: [
-      { href: '/modules', label: 'Modules', icon: '📚' },
       { href: '/feedback', label: 'Feedback', icon: '📝' },
     ]
   },
@@ -146,7 +144,7 @@ export default function Sidebar() {
       <header className="mobile-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div className="sidebar-logo" style={{ width: '32px', height: '32px', fontSize: '14px' }}>🛡️</div>
-          <span style={{ fontWeight: 700, fontSize: '15px' }}>Project Shield</span>
+          <span style={{ fontWeight: 700, fontSize: '15px' }}>Mission ON</span>
         </div>
         <button 
           onClick={toggleMobile}
@@ -171,7 +169,7 @@ export default function Sidebar() {
         <div className="sidebar-header">
           <div className="sidebar-logo">🛡️</div>
           <div className="sidebar-brand">
-            <span className="sidebar-brand-name">Project Shield</span>
+            <span className="sidebar-brand-name">Mission ON</span>
             <span className="sidebar-brand-sub">YI Erode Chapter</span>
           </div>
           {/* Mobile Close Button */}

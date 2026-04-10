@@ -54,7 +54,7 @@ export default function LoginPage() {
       <div className={styles.glassCard}>
         <div className={styles.header}>
           <div className={styles.shieldIcon}>🛡️</div>
-          <h1 className={styles.title}>Project Shield</h1>
+          <h1 className={styles.title}>Mission ON - Smart Choices</h1>
           <p className={styles.subtitle}>Young Indians Erode Chapter Platform</p>
         </div>
 

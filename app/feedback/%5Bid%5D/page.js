@@ -56,7 +56,7 @@ export default function StudentFeedbackPage() {
         <p style={{ color: 'var(--text-secondary)', maxWidth: '300px' }}>
           Your feedback helps us make <strong>Mission On</strong> better for everyone. Your smart choices matter!
         </p>
-        <div style={{ marginTop: '32px', color: 'var(--primary-400)', fontWeight: 700 }}>Project Shield | Yi Erode</div>
+        <div style={{ marginTop: '32px', color: 'var(--primary-400)', fontWeight: 700 }}>Mission ON - Smart Choices | Yi Erode</div>
       </div>
     );
   }
@@ -129,7 +129,7 @@ export default function StudentFeedbackPage() {
       </form>
 
       <footer style={{ marginTop: '60px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '12px' }}>
-        © 2026 Young Indians Erode Chapter | Project Shield
+        © 2026 Young Indians Erode Chapter | Mission ON - Smart Choices
       </footer>
     </div>
   );
