@@ -23,11 +23,11 @@
   --border-hover: rgba(0, 0, 0, 0.15);
   --border-active: rgba(99, 102, 241, 0.5);
 
-  /* Text */
-  --text-primary: #1f2937;   /* dark gray */
-  --text-secondary: #4b5563;
-  --text-tertiary: #6b7280;
-  --text-inverse: #f9fafb;
+  /* Text — Bright Violet & Pink Tinted */
+  --text-primary: #6b21a8;   /* bold bright violet */
+  --text-secondary: #9333ea; /* softer bright violet */
+  --text-tertiary: #c084fc;
+  --text-inverse: #ffffff;
 
   /* Primary Palette — Base Violet / Pink gradient */
   --primary-50: #faf5ff;
@@ -136,11 +136,11 @@
   --border-hover: rgba(255, 255, 255, 0.14);
   --border-active: rgba(99, 102, 241, 0.6);
 
-  /* Text */
-  --text-primary: #f9fafb;
-  --text-secondary: #9ca3af;
-  --text-tertiary: #6b7280;
-  --text-inverse: #1f2937;
+  /* Text — Bright Glow in Dark Mode */
+  --text-primary: #fdf4ff;   /* super light pinkish white */
+  --text-secondary: #f0abfc; /* bright pink */
+  --text-tertiary: #c084fc;  /* purple */
+  --text-inverse: #4a044e;
 
   /* Premium Gradients */
   --gradient-card: linear-gradient(135deg, rgba(168, 85, 247, 0.07), rgba(236, 72, 153, 0.05));
@@ -161,6 +161,10 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+h1, h2, h3, h4, strong {
+  color: var(--primary-600);
 }
 
 html {
