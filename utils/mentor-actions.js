@@ -3,6 +3,7 @@
 import { createClient } from "./supabase/server";
 import { revalidatePath } from "next/cache";
 import { getServerRole } from "./auth-server";
+import { logActivity } from "./logger";
 
 /**
  * Fetch mentor availability
@@ -40,6 +41,12 @@ export async function updateMentorAvailability(profileId, date, type, reason = '
   if (error) {
     console.error('Error updating availability:', error.message);
     return { success: false, error: error.message };
+  }
+  
+  if (type === 'blocked') {
+    await logActivity('Blocked Calendar Date', `Date ${date} frozen. Reason: ${reason || 'Not provided'}`);
+  } else {
+    await logActivity('Freed Calendar Date', `Date ${date} marked as available again.`);
   }
   
   revalidatePath('/mentor-dashboard');

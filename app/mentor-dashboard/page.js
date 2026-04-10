@@ -111,10 +111,14 @@ function CalendarSection({ availability, user, refresh }) {
 
   const handleSave = async (type) => {
     setIsSaving(true);
-    await updateMentorAvailability(user.id, selectedDate, type, reason);
-    setSelectedDate(null);
-    setReason('');
-    refresh();
+    const result = await updateMentorAvailability(user.id, selectedDate, type, reason);
+    if (result && result.error) {
+      alert(`Error updating availability: ${result.error}`);
+    } else {
+      setSelectedDate(null);
+      setReason('');
+      refresh();
+    }
     setIsSaving(false);
   };
 
