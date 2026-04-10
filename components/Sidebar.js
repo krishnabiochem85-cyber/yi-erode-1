@@ -17,7 +17,7 @@ const adminNav = [
   {
     section: 'Directories',
     items: [
-      { href: '/admin-dashboard/schools-list', label: 'School Dir.', icon: '🏢' },
+      { href: '/admin-dashboard/schools-list', label: 'School Coordinators', icon: '🏢' },
       { href: '/admin-dashboard/mentors-list', label: 'Mentor Roster', icon: '🧑‍⚕️' },
       { href: '/admin-dashboard/learners-list', label: 'Learner List', icon: '🎓' },
     ]

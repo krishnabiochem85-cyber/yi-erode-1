@@ -15,13 +15,17 @@ export async function getAdminDashboardStats() {
     { count: usersCount },
     { count: mentorsCount },
     { count: responsesCount },
-    { count: coordinatorsCount }
+    { count: coordinatorsCount },
+    { count: totalUsersCount },
+    { count: adminsCount }
   ] = await Promise.all([
     supabase.from('schools').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'mentor'),
     supabase.from('feedback').select('*', { count: 'exact', head: true }),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'school_coordinator')
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'school_coordinator'),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'admin')
   ]);
 
   return {
@@ -29,7 +33,9 @@ export async function getAdminDashboardStats() {
     activeUsers: usersCount || 0,
     mentors: mentorsCount || 0,
     responses: responsesCount || 0,
-    coordinators: coordinatorsCount || 0
+    coordinators: coordinatorsCount || 0,
+    totalUsers: totalUsersCount || 0,
+    admins: adminsCount || 0
   };
 }
 

@@ -6,7 +6,7 @@ import { getAdminDashboardStats } from "@/utils/admin-actions";
 import { getRecentActivities } from "@/utils/logger";
 
 export default function AdminOverviewPage() {
-  const [stats, setStats] = useState({ schools: 0, activeUsers: 0, mentors: 0, responses: 0, coordinators: 0 });
+  const [stats, setStats] = useState({ schools: 0, activeUsers: 0, mentors: 0, responses: 0, coordinators: 0, totalUsers: 0, admins: 0 });
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState([]);
@@ -65,6 +65,22 @@ export default function AdminOverviewPage() {
       </div>
 
       <div className="stats-grid">
+        <div className="stat-card pink">
+          <div className="stat-card-header">
+            <span className="stat-card-icon">🌍</span>
+            <span className="stat-card-badge up">Live</span>
+          </div>
+          <div className="stat-card-value">{loading ? '...' : stats.totalUsers}</div>
+          <div className="stat-card-label">Total Platform Users</div>
+        </div>
+        <div className="stat-card amber">
+          <div className="stat-card-header">
+            <span className="stat-card-icon">🛡️</span>
+            <span className="stat-card-badge up">Live</span>
+          </div>
+          <div className="stat-card-value">{loading ? '...' : stats.admins}</div>
+          <div className="stat-card-label">Active System Admins</div>
+        </div>
         <div className="stat-card cyan">
           <div className="stat-card-header">
             <span className="stat-card-icon">👨‍🏫</span>
@@ -142,8 +158,8 @@ export default function AdminOverviewPage() {
         <Link href="/admin-dashboard/schools-list" className="card action-card" style={{ display: "flex", alignItems: "center", gap: "16px", textDecoration: "none" }}>
           <div className="action-icon" style={{ background: "var(--indigo-glow)", color: "var(--indigo-400)" }}>🏢</div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px' }}>School Directory</h3>
-            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>Coordinator & Status Directory</p>
+            <h3 style={{ margin: 0, fontSize: '16px' }}>School Coordinators</h3>
+            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>Coordinators List & Details</p>
           </div>
         </Link>
         <Link href="/admin-dashboard/mentors-list" className="card action-card" style={{ display: "flex", alignItems: "center", gap: "16px", textDecoration: "none" }}>
