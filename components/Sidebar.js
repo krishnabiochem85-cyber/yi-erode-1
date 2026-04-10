@@ -80,6 +80,12 @@ export default function Sidebar() {
   const router = useRouter()
   const [role, setRole] = useState(null)
   const [user, setUser] = useState(null)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+
+  useEffect(() => {
+    // Close sidebar on navigation (mobile)
+    setIsMobileOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     // Check Supabase first, then dev cookies
@@ -127,97 +133,148 @@ export default function Sidebar() {
     router.push('/login')
   }
 
+  const toggleMobile = () => setIsMobileOpen(!isMobileOpen)
+
   return (
-    <aside className="sidebar">
-      <div className="sidebar-header">
-        <div className="sidebar-logo">🛡️</div>
-        <div className="sidebar-brand">
-          <span className="sidebar-brand-name">Project Shield</span>
-          <span className="sidebar-brand-sub">YI Erode Chapter</span>
+    <>
+      {/* Mobile Header Toggle */}
+      <header className="mobile-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="sidebar-logo" style={{ width: '32px', height: '32px', fontSize: '14px' }}>🛡️</div>
+          <span style={{ fontWeight: 700, fontSize: '15px' }}>Project Shield</span>
         </div>
-      </div>
+        <button 
+          onClick={toggleMobile}
+          style={{ 
+            width: '40px', height: '40px', borderRadius: '10px',
+            background: 'var(--primary-glow)', display: 'flex', 
+            alignItems: 'center', justifyContent: 'center',
+            fontSize: '20px'
+          }}
+        >
+          {isMobileOpen ? '✕' : '☰'}
+        </button>
+      </header>
 
-      <nav className="sidebar-nav">
-        {navItems.map((section) => (
-          <div key={section.section}>
-            <div className="sidebar-section-label">{section.section}</div>
-            {section.items.map((item) => {
-              const isActive = pathname === item.href || 
-                (item.href !== '/admin' && item.href !== '/mentor-dashboard' && item.href !== '/school-dashboard' && pathname.startsWith(item.href))
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`sidebar-link ${isActive ? 'active' : ''}`}
-                >
-                  <span className="sidebar-icon">{item.icon}</span>
-                  <span>{item.label}</span>
-                </Link>
-              )
-            })}
-          </div>
-        ))}
-      </nav>
+      {/* Backdrop for Mobile */}
+      <div 
+        className={`sidebar-overlay ${isMobileOpen ? 'active' : ''}`}
+        onClick={() => setIsMobileOpen(false)}
+      />
 
-      <div className="sidebar-footer">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{
-              width: '34px', height: '34px', borderRadius: '50%',
-              background: `linear-gradient(135deg, ${currentRole.color}, ${currentRole.color}80)`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '14px', fontWeight: 700, color: 'white', flexShrink: 0,
-              boxShadow: `0 0 12px ${currentRole.color}30`
-            }}>
-              {(user?.name || 'U').charAt(0)}
-            </div>
-            <div style={{ overflow: 'hidden', flex: 1 }}>
-              <div style={{
-                fontSize: '13px', fontWeight: '600',
-                whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
-                color: 'var(--text-primary)'
-              }}>
-                {user?.name || 'User'}
-              </div>
-              <div style={{
-                fontSize: '11px', fontWeight: '600',
-                color: currentRole.color,
-                display: 'flex', alignItems: 'center', gap: '4px'
-              }}>
-                <span style={{
-                  width: '6px', height: '6px', borderRadius: '50%',
-                  background: currentRole.color, display: 'inline-block',
-                  boxShadow: `0 0 6px ${currentRole.color}`
-                }}></span>
-                {currentRole.label}
-              </div>
-            </div>
+      <aside className={`sidebar ${isMobileOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <div className="sidebar-logo">🛡️</div>
+          <div className="sidebar-brand">
+            <span className="sidebar-brand-name">Project Shield</span>
+            <span className="sidebar-brand-sub">YI Erode Chapter</span>
           </div>
-          
-          <button
-            onClick={handleSignOut}
-            style={{
-              width: '100%', padding: '8px',
-              backgroundColor: 'rgba(239, 68, 68, 0.06)',
-              color: '#f87171',
-              border: '1px solid rgba(239, 68, 68, 0.12)',
-              borderRadius: '8px', cursor: 'pointer',
-              fontSize: '12.5px', fontWeight: '600',
-              transition: 'all 0.2s',
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.12)'
-              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.25)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.06)'
-              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.12)'
+          {/* Mobile Close Button */}
+          <button 
+            className="mobile-only"
+            onClick={toggleMobile}
+            style={{ 
+              marginLeft: 'auto', padding: '8px', 
+              color: 'var(--text-tertiary)', fontSize: '18px'
             }}
           >
-            Sign Out
+            ✕
           </button>
         </div>
-      </div>
-    </aside>
+
+        <nav className="sidebar-nav">
+          {navItems.map((section) => (
+            <div key={section.section}>
+              <div className="sidebar-section-label">{section.section}</div>
+              {section.items.map((item) => {
+                const isActive = pathname === item.href || 
+                  (item.href !== '/admin' && item.href !== '/mentor-dashboard' && item.href !== '/school-dashboard' && pathname.startsWith(item.href))
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`sidebar-link ${isActive ? 'active' : ''}`}
+                  >
+                    <span className="sidebar-icon">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
+        </nav>
+
+        <div className="sidebar-footer">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                width: '34px', height: '34px', borderRadius: '50%',
+                background: `linear-gradient(135deg, ${currentRole.color}, ${currentRole.color}80)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '14px', fontWeight: 700, color: 'white', flexShrink: 0,
+                boxShadow: `0 0 12px ${currentRole.color}30`
+              }}>
+                {(user?.name || 'U').charAt(0)}
+              </div>
+              <div style={{ overflow: 'hidden', flex: 1 }}>
+                <div style={{
+                  fontSize: '13px', fontWeight: '600',
+                  whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
+                  color: 'var(--text-primary)'
+                }}>
+                  {user?.name || 'User'}
+                </div>
+                <div style={{
+                  fontSize: '11px', fontWeight: '600',
+                  color: currentRole.color,
+                  display: 'flex', alignItems: 'center', gap: '4px'
+                }}>
+                  <span style={{
+                    width: '6px', height: '6px', borderRadius: '50%',
+                    background: currentRole.color, display: 'inline-block',
+                    boxShadow: `0 0 6px ${currentRole.color}`
+                  }}></span>
+                  {currentRole.label}
+                </div>
+              </div>
+            </div>
+            
+            <button
+              onClick={handleSignOut}
+              style={{
+                width: '100%', padding: '8px',
+                backgroundColor: 'rgba(239, 68, 68, 0.06)',
+                color: '#f87171',
+                border: '1px solid rgba(239, 68, 68, 0.12)',
+                borderRadius: '8px', cursor: 'pointer',
+                fontSize: '12.5px', fontWeight: '600',
+                transition: 'all 0.2s',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.12)'
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.25)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.06)'
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.12)'
+              }}
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <style jsx>{`
+        .mobile-only {
+          display: none;
+        }
+        @media (max-width: 768px) {
+          .mobile-only {
+            display: block;
+          }
+        }
+      `}</style>
+    </>
   )
 }
