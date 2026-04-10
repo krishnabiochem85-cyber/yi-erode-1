@@ -26,8 +26,8 @@ export default async function RootPage({ searchParams }) {
     if (user.email === ADMIN_EMAIL || user.email === 'krishna.biochem85@gmail.com') {
       redirect('/admin-dashboard');
     }
-    // New users go to a waiting page
-    redirect('/pending');
+    // New users default to the student dashboard
+    redirect('/student-dashboard');
   }
 
   if (role === 'admin') {
@@ -46,9 +46,9 @@ export default async function RootPage({ searchParams }) {
     redirect('/student-dashboard');
   }
 
-  // Handle unassigned role
+  // Handle unassigned role (Legacy trigger users) - Default them to student features
   if (role === 'unassigned') {
-    redirect('/pending');
+    redirect('/student-dashboard');
   }
 
   // Fallback

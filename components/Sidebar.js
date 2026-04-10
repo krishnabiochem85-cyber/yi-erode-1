@@ -10,34 +10,21 @@ const adminNav = [
   {
     section: 'Overview',
     items: [
-      { href: '/admin', label: 'Dashboard', icon: '📊' },
+      { href: '/admin-dashboard', label: 'Dashboard', icon: '📊' },
     ]
   },
   {
-    section: 'Management',
+    section: 'Sub-Dashboards',
     items: [
-      { href: '/schools', label: 'Schools', icon: '🏫' },
-      { href: '/assessments', label: 'Assessments', icon: '📝' },
-      { href: '/modules', label: 'Module Matrix', icon: '🎯' },
+      { href: '/school-dashboard', label: 'School Dashboard', icon: '🏫' },
+      { href: '/mentor-dashboard', label: 'Mentor Dashboard', icon: '🧑‍⚕️' },
     ]
   },
   {
-    section: 'Operations',
+    section: 'Actions',
     items: [
-      { href: '/schedule', label: 'Schedule', icon: '📅' },
-      { href: '/mentors', label: 'Mentors', icon: '👥' },
-    ]
-  },
-  {
-    section: 'Insights',
-    items: [
-      { href: '/feedback', label: 'Feedback', icon: '💬' },
-    ]
-  },
-  {
-    section: 'Admin',
-    items: [
-      { href: '/admin/roles', label: 'Manage Roles', icon: '🔐' },
+      { href: '/admin-dashboard/add-mentor', label: 'Add Mentor', icon: '➕' },
+      { href: '/admin-dashboard/roles', label: 'Manage Roles', icon: '🔑' },
     ]
   }
 ]
@@ -71,6 +58,22 @@ const schoolNav = [
       { href: '/assessments', label: 'Assessment', icon: '📝' },
       { href: '/schedule', label: 'Sessions', icon: '📅' },
       { href: '/feedback', label: 'Feedback', icon: '💬' },
+    ]
+  },
+]
+
+const studentNav = [
+  {
+    section: 'Overview',
+    items: [
+      { href: '/student-dashboard', label: 'My Dashboard', icon: '📊' },
+    ]
+  },
+  {
+    section: 'Program',
+    items: [
+      { href: '/modules', label: 'Modules', icon: '📚' },
+      { href: '/feedback', label: 'Feedback', icon: '📝' },
     ]
   },
 ]
@@ -114,12 +117,14 @@ export default function Sidebar() {
     return null
   }
 
-  const navItems = role === 'admin' ? adminNav : role === 'mentor' ? mentorNav : schoolNav
+  const navItems = role === 'admin' ? adminNav : role === 'mentor' ? mentorNav : role === 'student' ? studentNav : schoolNav
 
   const roleDisplay = {
     admin: { label: 'Administrator', color: '#818cf8' },
     school_coordinator: { label: 'Coordinator', color: '#fbbf24' },
     mentor: { label: 'Mentor', color: '#34d399' },
+    student: { label: 'Student', color: '#6366f1' },
+    unassigned: { label: 'Student', color: '#6366f1' }, // Fallback gracefully if db has unassigned
   }
 
   const currentRole = roleDisplay[role] || roleDisplay.admin

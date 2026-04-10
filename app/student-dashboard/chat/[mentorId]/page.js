@@ -74,7 +74,7 @@ export default function ChatRoom({ params }) {
 
   if (!data || data.assigned_mentor_id !== mentorId) {
     return (
-      <div className="main-content" style={{ padding: '40px', textAlign: 'center' }}>
+      <div style={{ padding: '40px', textAlign: 'center' }}>
         <h2>Access Denied</h2>
         <p>You can only chat with your assigned mentor.</p>
         <Link href="/student-dashboard" className="btn btn-primary" style={{ marginTop: '20px' }}>Return to Dashboard</Link>
@@ -85,7 +85,7 @@ export default function ChatRoom({ params }) {
   const mentor = data.mentor;
 
   return (
-    <div className="main-content" style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 40px)' }}>
+    <div style={{ padding: '0', maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)' }}>
       {/* Chat Room Header */}
       <div style={{
         display: 'flex',

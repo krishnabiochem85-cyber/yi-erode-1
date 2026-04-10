@@ -308,7 +308,8 @@ export default function StudentDashboard() {
           fontSize: '14px',
           fontWeight: 600,
           color: actionStatus.startsWith('Error') ? 'var(--danger-400)' : 'var(--primary-400)',
-          animation: 'fadeInUp 0.3s ease-out'
+          animation: 'fadeInUp 0.3s ease-out',
+          zIndex: 100
         }}>
           {actionStatus === 'choosing' || actionStatus === 'requesting' ? 'Processing...' : actionStatus}
         </div>

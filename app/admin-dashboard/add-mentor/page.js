@@ -21,7 +21,7 @@ export default function AddMentorPage() {
   }
 
   return (
-    <div className="main-content">
+    <div>
       <div className="page-header">
         <h1 className="page-title">Add New Mentor</h1>
         <p className="page-subtitle">Register a new mentor into the JKKN system</p>

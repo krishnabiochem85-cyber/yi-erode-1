@@ -29,7 +29,7 @@ export default function AdminOverviewPage() {
   }, []);
 
   return (
-    <div className="main-content">
+    <div>
       <div className="page-header">
         <div>
           <h1 className="page-title">Admin Hub</h1>

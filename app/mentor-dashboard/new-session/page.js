@@ -21,7 +21,7 @@ export default function NewSessionPage() {
   }
 
   return (
-    <div className="main-content">
+    <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
       <div className="page-header">
         <h1 className="page-title">New Session</h1>
         <p className="page-subtitle">Schedule a new awareness session</p>
