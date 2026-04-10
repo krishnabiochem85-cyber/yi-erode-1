@@ -14,16 +14,18 @@ const adminNav = [
     ]
   },
   {
-    section: 'Sub-Dashboards',
+    section: 'Directories',
     items: [
-      { href: '/school-dashboard', label: 'School Dashboard', icon: '🏫' },
-      { href: '/mentor-dashboard', label: 'Mentor Dashboard', icon: '🧑‍⚕️' },
+      { href: '/admin-dashboard/schools-list', label: 'School Dir.', icon: '🏢' },
+      { href: '/admin-dashboard/mentors-list', label: 'Mentor Roster', icon: '🧑‍⚕️' },
+      { href: '/admin-dashboard/learners-list', label: 'Learner List', icon: '🎓' },
     ]
   },
   {
-    section: 'Actions',
+    section: 'Controls',
     items: [
-      { href: '/admin-dashboard/add-mentor', label: 'Add Mentor', icon: '➕' },
+      { href: '/admin-dashboard/notes', label: 'Admin Comms', icon: '💬' },
+      { href: '/admin-dashboard/add-mentor', label: 'Onboard Mentor', icon: '➕' },
       { href: '/admin-dashboard/roles', label: 'Manage Roles', icon: '🔑' },
     ]
   }
