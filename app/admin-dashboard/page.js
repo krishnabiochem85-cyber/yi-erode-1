@@ -124,6 +124,34 @@ export default function AdminOverviewPage() {
             <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>Assign roles and access levels</p>
           </div>
         </Link>
+        <Link href="/admin-dashboard/notes" className="card action-card" style={{ display: "flex", alignItems: "center", gap: "16px", textDecoration: "none" }}>
+          <div className="action-icon" style={{ background: "var(--primary-glow)", color: "var(--primary-400)" }}>💬</div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '16px' }}>Admin Comms</h3>
+            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>Secure channel for admin notes</p>
+          </div>
+        </Link>
+        <Link href="/admin-dashboard/schools-list" className="card action-card" style={{ display: "flex", alignItems: "center", gap: "16px", textDecoration: "none" }}>
+          <div className="action-icon" style={{ background: "var(--indigo-glow)", color: "var(--indigo-400)" }}>🏢</div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '16px' }}>School Directory</h3>
+            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>Coordinator & Status Directory</p>
+          </div>
+        </Link>
+        <Link href="/admin-dashboard/mentors-list" className="card action-card" style={{ display: "flex", alignItems: "center", gap: "16px", textDecoration: "none" }}>
+          <div className="action-icon" style={{ background: "var(--purple-glow)", color: "var(--purple-400)" }}>🧑‍⚕️</div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '16px' }}>Mentor Roster</h3>
+            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>Availability & Details board</p>
+          </div>
+        </Link>
+        <Link href="/admin-dashboard/learners-list" className="card action-card" style={{ display: "flex", alignItems: "center", gap: "16px", textDecoration: "none" }}>
+          <div className="action-icon" style={{ background: "var(--emerald-glow)", color: "var(--emerald-400)" }}>🎓</div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '16px' }}>Learner Masterlist</h3>
+            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>Track students tracking matrix</p>
+          </div>
+        </Link>
       </div>
 
       {/* Activity Feed Section */}

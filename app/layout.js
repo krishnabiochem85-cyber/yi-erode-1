@@ -1,6 +1,7 @@
 import "./globals.css";
 import { ThemeProvider } from "./ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import ProfileCompletionModal from "@/components/ProfileCompletionModal";
 
 export const metadata = {
   title: "Mission ON - Smart Choices — YI Erode Chapter",
@@ -19,6 +20,7 @@ export default function RootLayout({ children }) {
       <body>
         <ThemeProvider>
           {children}
+          <ProfileCompletionModal />
           <ThemeToggle />
         </ThemeProvider>
       </body>
