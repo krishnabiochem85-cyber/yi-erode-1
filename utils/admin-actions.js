@@ -17,7 +17,7 @@ export async function getAdminDashboardStats() {
     { count: responsesCount }
   ] = await Promise.all([
     supabase.from('schools').select('*', { count: 'exact', head: true }),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'mentor'),
     supabase.from('feedback').select('*', { count: 'exact', head: true })
   ]);

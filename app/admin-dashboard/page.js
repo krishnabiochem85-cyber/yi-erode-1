@@ -71,7 +71,7 @@ export default function AdminOverviewPage() {
             <span className="stat-card-badge up">Live</span>
           </div>
           <div className="stat-card-value">{loading ? '...' : stats.activeUsers}</div>
-          <div className="stat-card-label">Total Active Users</div>
+          <div className="stat-card-label">Enrolled Learners</div>
         </div>
         <div className="stat-card purple">
           <div className="stat-card-header">
