@@ -14,19 +14,22 @@ export async function getAdminDashboardStats() {
     { count: schoolsCount },
     { count: usersCount },
     { count: mentorsCount },
-    { count: responsesCount }
+    { count: responsesCount },
+    { count: coordinatorsCount }
   ] = await Promise.all([
     supabase.from('schools').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'mentor'),
-    supabase.from('feedback').select('*', { count: 'exact', head: true })
+    supabase.from('feedback').select('*', { count: 'exact', head: true }),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'school_coordinator')
   ]);
 
   return {
     schools: schoolsCount || 0,
     activeUsers: usersCount || 0,
     mentors: mentorsCount || 0,
-    responses: responsesCount || 0
+    responses: responsesCount || 0,
+    coordinators: coordinatorsCount || 0
   };
 }
 

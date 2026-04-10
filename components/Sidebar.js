@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getDevRole, getDevUser, clearDevRole } from '@/utils/auth'
 import { createClient } from '@/utils/supabase/client'
+import { getAdminDashboardStats } from '@/utils/admin-actions'
 
 const adminNav = [
   {
@@ -84,6 +85,7 @@ export default function Sidebar() {
   const [role, setRole] = useState(null)
   const [user, setUser] = useState(null)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [adminStats, setAdminStats] = useState(null)
 
   useEffect(() => {
     // Close sidebar on navigation (mobile)
@@ -112,6 +114,14 @@ export default function Sidebar() {
       setUser(getDevUser());
     });
   }, [])
+
+  useEffect(() => {
+    if (role === 'admin') {
+      getAdminDashboardStats().then(stats => {
+        setAdminStats(stats);
+      }).catch(err => console.error("Error loading sidebar stats", err));
+    }
+  }, [role])
 
   if (pathname === '/login' || pathname.startsWith('/auth')) {
     return null
@@ -194,6 +204,7 @@ export default function Sidebar() {
               {section.items.map((item) => {
                 const isActive = pathname === item.href || 
                   (item.href !== '/admin' && item.href !== '/mentor-dashboard' && item.href !== '/school-dashboard' && pathname.startsWith(item.href))
+                const isSchoolDir = item.href === '/admin-dashboard/schools-list';
                 return (
                   <Link
                     key={item.href}
@@ -201,7 +212,12 @@ export default function Sidebar() {
                     className={`sidebar-link ${isActive ? 'active' : ''}`}
                   >
                     <span className="sidebar-icon">{item.icon}</span>
-                    <span>{item.label}</span>
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                    {isSchoolDir && adminStats && (
+                      <span className="badge" style={{ background: "var(--primary-glow)", color: "var(--primary-400)", fontSize: "10px", padding: "2px 6px" }}>
+                        {adminStats.coordinators}
+                      </span>
+                    )}
                   </Link>
                 )
               })}

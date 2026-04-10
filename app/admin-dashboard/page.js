@@ -6,7 +6,7 @@ import { getAdminDashboardStats } from "@/utils/admin-actions";
 import { getRecentActivities } from "@/utils/logger";
 
 export default function AdminOverviewPage() {
-  const [stats, setStats] = useState({ schools: 0, activeUsers: 0, mentors: 0, responses: 0 });
+  const [stats, setStats] = useState({ schools: 0, activeUsers: 0, mentors: 0, responses: 0, coordinators: 0 });
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState([]);
@@ -65,6 +65,14 @@ export default function AdminOverviewPage() {
       </div>
 
       <div className="stats-grid">
+        <div className="stat-card cyan">
+          <div className="stat-card-header">
+            <span className="stat-card-icon">👨‍🏫</span>
+            <span className="stat-card-badge up">Live</span>
+          </div>
+          <div className="stat-card-value">{loading ? '...' : stats.coordinators}</div>
+          <div className="stat-card-label">School Coordinators</div>
+        </div>
         <div className="stat-card indigo">
           <div className="stat-card-header">
             <span className="stat-card-icon">👥</span>
