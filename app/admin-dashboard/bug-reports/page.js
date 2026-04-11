@@ -55,7 +55,7 @@ export default function BugReportsPage() {
     <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
         <div>
-          <h1 className="page-title">🐛 Bug Reports</h1>
+          <h1 className="page-title">⚠️ Issue Reports</h1>
           <p className="page-subtitle">Review and resolve issues reported by users across the platform.</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -76,7 +76,7 @@ export default function BugReportsPage() {
         <div style={{ padding: '40px', textAlign: 'center' }}>Loading bug reports...</div>
       ) : filtered.length === 0 ? (
         <div className="card" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
-          {filter === 'all' ? 'No bug reports yet. Users can report issues via the 🐛 button.' : `No ${filter.replace('_', ' ')} reports.`}
+          {filter === 'all' ? 'No issue reports yet. Users can report issues via the ⚠️ button.' : `No ${filter.replace('_', ' ')} reports.`}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

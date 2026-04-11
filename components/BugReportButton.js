@@ -118,7 +118,7 @@ export default function BugReportButton() {
           e.currentTarget.style.boxShadow = '0 6px 24px rgba(239,68,68,0.4)';
         }}
       >
-        🐛
+        ⚠️
       </button>
 
       {/* Modal Overlay */}
@@ -154,7 +154,7 @@ export default function BugReportButton() {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <div>
-                <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary, #fff)', margin: 0 }}>🐛 Report a Bug</h3>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary, #fff)', margin: 0 }}>⚠️ Report an Issue</h3>
                 <p style={{ fontSize: '13px', color: 'var(--text-secondary, #888)', marginTop: '4px' }}>Help us improve by reporting issues you encounter.</p>
               </div>
               <button
