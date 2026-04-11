@@ -2,15 +2,38 @@
 
 import { createClient } from "./supabase/server";
 
+/**
+ * Helper: Enrich profiles with emails from auth.users via secure RPC
+ */
+async function enrichWithEmails(supabase, profiles) {
+  if (!profiles || profiles.length === 0) return profiles;
+  
+  const ids = profiles.map(p => p.id);
+  const { data: emailData, error } = await supabase.rpc('get_user_emails', { user_ids: ids });
+  
+  if (error || !emailData) {
+    console.error("Error fetching user emails:", error?.message);
+    return profiles.map(p => ({ ...p, email: '—' }));
+  }
+
+  const emailMap = {};
+  emailData.forEach(e => { emailMap[e.id] = e.email; });
+
+  return profiles.map(p => ({
+    ...p,
+    email: emailMap[p.id] || '—'
+  }));
+}
+
 // 1. Fetch School Coordinators + Schools
 export async function getSchoolCoordinatorsList() {
   const supabase = await createClient();
+  
   const { data, error } = await supabase
     .from('profiles')
     .select(`
       id,
       full_name,
-      email,
       phone,
       school_id,
       schools:school_id (name, district, status)
@@ -21,7 +44,8 @@ export async function getSchoolCoordinatorsList() {
     console.error("Error fetching school coordinators:", error);
     return [];
   }
-  return data;
+
+  return enrichWithEmails(supabase, data);
 }
 
 // 2. Fetch Mentors Data
@@ -32,7 +56,6 @@ export async function getMentorsList() {
     .select(`
       id,
       full_name,
-      email,
       phone,
       course,
       college,
@@ -48,7 +71,8 @@ export async function getMentorsList() {
     console.error("Error fetching mentors:", error);
     return [];
   }
-  return data;
+
+  return enrichWithEmails(supabase, data);
 }
 
 // 3. Fetch Learners Data
@@ -59,7 +83,6 @@ export async function getLearnersList() {
     .select(`
       id,
       full_name,
-      email,
       academic_class,
       school_id,
       schools:school_id (name),
@@ -72,5 +95,6 @@ export async function getLearnersList() {
     console.error("Error fetching learners:", error);
     return [];
   }
-  return data;
+
+  return enrichWithEmails(supabase, data);
 }

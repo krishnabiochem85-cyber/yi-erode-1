@@ -63,6 +63,7 @@ export default function MentorsListPage() {
               <thead style={{ background: "var(--bg-glass)", borderBottom: "1px solid var(--border-subtle)" }}>
                 <tr>
                   <th style={{ padding: "16px 24px", fontWeight: 700, color: "var(--text-secondary)", fontSize: "14px" }}>Identity</th>
+                  <th style={{ padding: "16px 24px", fontWeight: 700, color: "var(--text-secondary)", fontSize: "14px" }}>Email</th>
                   <th style={{ padding: "16px 24px", fontWeight: 700, color: "var(--text-secondary)", fontSize: "14px" }}>Course & College</th>
                   <th style={{ padding: "16px 24px", fontWeight: 700, color: "var(--text-secondary)", fontSize: "14px" }}>Contact No.</th>
                   <th style={{ padding: "16px 24px", fontWeight: 700, color: "var(--text-secondary)", fontSize: "14px", width: "20%" }}>{filteredMonthName} Availability</th>
@@ -88,6 +89,7 @@ export default function MentorsListPage() {
                         <div style={{ fontWeight: 600 }}>{row.full_name}</div>
                         <div style={{ fontSize: "12px", color: "var(--primary-400)", fontWeight: 700 }}>Alias: {row.pseudo_name || 'N/A'}</div>
                       </td>
+                      <td style={{ padding: "16px 24px", color: "var(--text-secondary)", fontSize: "13px" }}>{row.email || '—'}</td>
                       <td style={{ padding: "16px 24px", color: "var(--text-secondary)" }}>
                         <div style={{ fontWeight: 500, color: "var(--text-primary)" }}>{row.course || <span style={{ color: "var(--warning-400)" }}>Unknown Course</span>}</div>
                         <div style={{ fontSize: "12px" }}>{row.college || 'Unknown College'}</div>
