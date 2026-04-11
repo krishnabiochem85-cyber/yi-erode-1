@@ -127,8 +127,8 @@ export default function Sidebar() {
     admin: { label: 'Administrator', color: '#818cf8' },
     school_coordinator: { label: 'Coordinator', color: '#fbbf24' },
     mentor: { label: 'Mentor', color: '#34d399' },
-    student: { label: 'Student', color: '#6366f1' },
-    unassigned: { label: 'Student', color: '#6366f1' }, // Fallback gracefully if db has unassigned
+    student: { label: 'Learner', color: '#6366f1' },
+    unassigned: { label: 'Learner', color: '#6366f1' }, // Fallback gracefully if db has unassigned
   }
 
   const currentRole = roleDisplay[role] || roleDisplay.admin

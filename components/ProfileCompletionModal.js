@@ -74,7 +74,7 @@ export default function ProfileCompletionModal() {
               </div>
               <div>
                 <label className="form-label" style={{ fontWeight: 600 }}>Pseudo Name (Alias) <span style={{color:'var(--error-400)'}}>*</span></label>
-                <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginBottom: '4px' }}>Used when communicating with students preserving anonymity</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginBottom: '4px' }}>Used when communicating with learners preserving anonymity</div>
                 <input type="text" name="pseudo_name" required className="form-input" placeholder="e.g. Mentor Alpha" defaultValue={profile.pseudo_name || ''} />
               </div>
             </>

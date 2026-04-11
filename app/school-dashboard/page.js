@@ -190,7 +190,7 @@ export default function SchoolDashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {[
               { icon: '📝', label: 'Update Proile', desc: 'Manage your contact info', color: 'var(--primary-400)' },
-              { icon: '📊', label: 'Student Reports', desc: 'View feedback analytics', color: 'var(--success-400)' },
+              { icon: '📊', label: 'Learner Reports', desc: 'View feedback analytics', color: 'var(--success-400)' },
               { icon: '📅', label: 'Class Schedule', desc: 'View session dates', color: 'var(--warning-400)' },
               { icon: '💬', label: 'Support', desc: 'Contact admin team', color: 'var(--accent-400)' },
             ].map((action) => (

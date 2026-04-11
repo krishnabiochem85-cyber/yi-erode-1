@@ -117,7 +117,7 @@ export default function StudentDashboard() {
     <div className="main-content" style={{ marginLeft: 0, padding: '40px 20px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header & Quote */}
       <div className="page-header" style={{ textAlign: 'center', marginBottom: '48px' }}>
-        <h1 className="page-title" style={{ fontSize: '36px', marginBottom: '16px' }}>Student Hub</h1>
+        <h1 className="page-title" style={{ fontSize: '36px', marginBottom: '16px' }}>Learner Hub</h1>
         <div style={{
           padding: '32px',
           borderRadius: '24px',
@@ -181,7 +181,7 @@ export default function StudentDashboard() {
              />
              <div>
                 <h2 style={{ fontSize: '20px', fontWeight: 800 }}>{data.full_name}</h2>
-                <span className="badge badge-primary">Student</span>
+                <span className="badge badge-primary">Learner</span>
              </div>
           </div>
           
