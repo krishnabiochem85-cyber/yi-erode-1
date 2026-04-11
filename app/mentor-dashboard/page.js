@@ -12,7 +12,7 @@ import Link from 'next/link';
 
 export default function MentorDashboard() {
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('calendar');
+  const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   
   // Feature States
@@ -69,35 +69,77 @@ export default function MentorDashboard() {
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', background: 'var(--bg-glass)', padding: '6px', borderRadius: '12px', border: '1px solid var(--border)', width: 'fit-content' }}>
-        {[
-          { id: 'calendar', label: '📅 Availability', color: 'var(--emerald-400)' },
-          { id: 'schools', label: '🏫 Schools', color: 'var(--blue-400)' },
-          { id: 'feedback', label: '⭐ Feedback', color: 'var(--amber-400)' },
-          { id: 'chat', label: '💬 Interactions', color: 'var(--indigo-400)' }
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '14px', transition: 'all 0.2s',
-              background: activeTab === tab.id ? 'var(--bg-elevated)' : 'transparent',
-              color: activeTab === tab.id ? tab.color : 'var(--text-secondary)',
-              boxShadow: activeTab === tab.id ? '0 4px 12px rgba(0,0,0,0.1)' : 'none'
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        {/* Side Tabs Navigation */}
+        <div style={{ flex: '1 1 240px', maxWidth: '300px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg-glass)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+          {[
+            { id: 'overview', label: '📊 Overview', color: 'var(--purple-400)' },
+            { id: 'calendar', label: '📅 Availability', color: 'var(--emerald-400)' },
+            { id: 'schools', label: '🏫 Schools', color: 'var(--blue-400)' },
+            { id: 'feedback', label: '⭐ Feedback', color: 'var(--amber-400)' },
+            { id: 'chat', label: '💬 Interactions', color: 'var(--indigo-400)' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                textAlign: 'left',
+                padding: '12px 16px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '14px', transition: 'all 0.2s',
+                background: activeTab === tab.id ? 'var(--bg-elevated)' : 'transparent',
+                color: activeTab === tab.id ? tab.color : 'var(--text-secondary)',
+                boxShadow: activeTab === tab.id ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+                width: '100%',
+                display: 'flex', alignItems: 'center'
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-      {/* Tab Content */}
-      <div className="card" style={{ padding: '32px', minHeight: '500px' }}>
-        {activeTab === 'calendar' && user && <CalendarSection availability={availability} user={user} refresh={() => getMentorAvailability(user.id).then(setAvailability)} />}
-        {activeTab === 'schools' && <SchoolsSection schools={schools} />}
-        {activeTab === 'feedback' && <FeedbackSection feedback={feedback} />}
-        {activeTab === 'chat' && <InteractionsSection interactions={interactions} />}
+        {/* Tab Content */}
+        <div className="card" style={{ flex: '3 1 500px', padding: '32px', minHeight: '500px' }}>
+          {activeTab === 'overview' && user && <OverviewSection availability={availability} schools={schools} feedback={feedback} />}
+          {activeTab === 'calendar' && user && <CalendarSection availability={availability} user={user} refresh={() => getMentorAvailability(user.id).then(setAvailability)} />}
+          {activeTab === 'schools' && <SchoolsSection schools={schools} />}
+          {activeTab === 'feedback' && <FeedbackSection feedback={feedback} />}
+          {activeTab === 'chat' && <InteractionsSection interactions={interactions} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* --- OVERVIEW SECTION --- */
+function OverviewSection({ availability, schools, feedback }) {
+  const availableDatesCount = availability.filter(a => a.type === 'free').length;
+  
+  let avgRating = 0;
+  if (feedback.length > 0) {
+     const sum = feedback.reduce((acc, curr) => acc + curr.rating, 0);
+     avgRating = (sum / feedback.length).toFixed(1);
+  }
+
+  return (
+    <div>
+      <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '24px' }}>Dashboard Overview</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+        
+        <div style={{ padding: '24px', borderRadius: '16px', background: 'var(--bg-elevated)', border: '1px solid var(--emerald-400)' }}>
+            <div style={{ fontSize: '32px', fontWeight: 900, color: 'var(--emerald-400)' }}>{availableDatesCount}</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Available Dates Ahead</div>
+        </div>
+
+        <div style={{ padding: '24px', borderRadius: '16px', background: 'var(--bg-elevated)', border: '1px solid var(--blue-400)' }}>
+            <div style={{ fontSize: '32px', fontWeight: 900, color: 'var(--blue-400)' }}>{schools.length}</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Schools Allocated</div>
+        </div>
+
+        <div style={{ padding: '24px', borderRadius: '16px', background: 'var(--bg-elevated)', border: '1px solid var(--amber-400)' }}>
+            <div style={{ fontSize: '32px', fontWeight: 900, color: 'var(--amber-400)' }}>{feedback.length > 0 ? avgRating : 'N/A'}</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Overall Rating</div>
+        </div>
+
       </div>
     </div>
   );

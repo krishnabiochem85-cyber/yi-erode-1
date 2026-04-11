@@ -42,7 +42,6 @@ const mentorNav = [
   {
     section: 'Sessions',
     items: [
-      { href: '/schedule', label: 'My Schedule', icon: '📅' },
       { href: '/feedback', label: 'Submit Feedback', icon: '💬' },
     ]
   },
