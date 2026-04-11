@@ -105,18 +105,14 @@ export default function MentorDashboard() {
 
 /* --- CALENDAR SECTION --- */
 function CalendarSection({ availability, user, refresh }) {
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [reason, setReason] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = async (type) => {
+  const handleStatusChange = async (dateStr, type) => {
     setIsSaving(true);
-    const result = await updateMentorAvailability(user.id, selectedDate, type, reason);
+    const result = await updateMentorAvailability(user.id, dateStr, type, '');
     if (result && result.error) {
       alert(`Error updating availability: ${result.error}`);
     } else {
-      setSelectedDate(null);
-      setReason('');
       refresh();
     }
     setIsSaving(false);
@@ -133,7 +129,7 @@ function CalendarSection({ availability, user, refresh }) {
     <div>
       <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>Manage Availability</h3>
       <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>
-        Mark days as blocked for exams, hospital duties, or other schedules.
+        Mark days as blocked for exams, hospital duties, or other schedules. Select your status directly below each date.
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
@@ -145,23 +141,41 @@ function CalendarSection({ availability, user, refresh }) {
           return (
             <div 
               key={dateStr}
-              onClick={() => setSelectedDate(dateStr)}
               style={{
                 background: isBlocked ? 'var(--error-glow)' : 'var(--bg-elevated)',
                 border: `1px solid ${isBlocked ? 'var(--error-400)' : 'var(--border)'}`,
-                padding: '16px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', transition: 'transform 0.2s',
-                transform: selectedDate === dateStr ? 'scale(1.05)' : 'none'
+                padding: '16px', borderRadius: '12px', textAlign: 'center', transition: 'all 0.2s',
+                opacity: isSaving ? 0.6 : 1
               }}
             >
               <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
                 {date.toLocaleDateString('en-US', { weekday: 'short' })}
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 800, margin: '4px 0' }}>{date.getDate()}</div>
-              <div style={{ fontSize: '13px', fontWeight: 500, color: isBlocked ? 'var(--error-400)' : 'var(--success-400)' }}>
-                {isBlocked ? 'Blocked' : 'Available'}
-              </div>
+              <div style={{ fontSize: '24px', fontWeight: 800, margin: '4px 0', color: 'var(--text-primary)' }}>{date.getDate()}</div>
+              
+              <select
+                value={isBlocked ? 'blocked' : 'free'}
+                onChange={(e) => handleStatusChange(dateStr, e.target.value)}
+                disabled={isSaving}
+                style={{
+                  marginTop: '12px',
+                  width: '100%',
+                  padding: '6px',
+                  borderRadius: '6px',
+                  background: 'var(--bg-glass)',
+                  color: isBlocked ? 'var(--error-400)' : 'var(--success-400)',
+                  border: `1px solid ${isBlocked ? 'var(--error-400)' : 'var(--success-400)'}`,
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  cursor: isSaving ? 'not-allowed' : 'pointer'
+                }}
+              >
+                <option value="free" style={{ color: 'var(--text-primary)' }}>Available</option>
+                <option value="blocked" style={{ color: 'var(--text-primary)' }}>Blocked</option>
+              </select>
+
               {record?.reason && (
-                <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '4px', fontStyle: 'italic' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '8px', fontStyle: 'italic' }}>
                   "{record.reason}"
                 </div>
               )}
@@ -169,26 +183,6 @@ function CalendarSection({ availability, user, refresh }) {
           );
         })}
       </div>
-
-      {selectedDate && (
-        <div style={{ marginTop: '32px', padding: '24px', background: 'var(--bg-glass)', borderRadius: '16px', border: '1px solid var(--primary-400)' }}>
-          <h4 style={{ fontWeight: 700, marginBottom: '16px' }}>Update {selectedDate}</h4>
-          <div style={{ marginBottom: '16px' }}>
-            <label className="form-label">Reason (if blocking)</label>
-            <input 
-              className="form-input" 
-              placeholder="e.g. SEM Exams, Hospital Internship..." 
-              value={reason} 
-              onChange={e => setReason(e.target.value)}
-            />
-          </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button className="btn btn-primary" onClick={() => handleSave('free')} disabled={isSaving}>Set as Available</button>
-            <button className="btn btn-danger" onClick={() => handleSave('blocked')} disabled={isSaving}>Block this Date</button>
-            <button className="btn btn-secondary" onClick={() => setSelectedDate(null)}>Cancel</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

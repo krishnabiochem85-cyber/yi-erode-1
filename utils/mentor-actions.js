@@ -34,8 +34,7 @@ export async function updateMentorAvailability(profileId, date, type, reason = '
       profile_id: profileId, 
       date, 
       type, 
-      reason,
-      updated_at: new Date().toISOString()
+      reason
     }], { onConflict: 'profile_id, date' });
 
   if (error) {
