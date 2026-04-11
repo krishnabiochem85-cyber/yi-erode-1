@@ -129,7 +129,7 @@ function CalendarSection({ availability, user, refresh }) {
     <div>
       <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>Manage Availability</h3>
       <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>
-        Mark days as blocked for exams, hospital duties, or other schedules. Select your status directly below each date.
+        Mark days as not available for exams, hospital duties, or other schedules. Select your status directly below each date.
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
@@ -171,7 +171,7 @@ function CalendarSection({ availability, user, refresh }) {
                 }}
               >
                 <option value="free" style={{ color: 'var(--text-primary)' }}>Available</option>
-                <option value="blocked" style={{ color: 'var(--text-primary)' }}>Blocked</option>
+                <option value="blocked" style={{ color: 'var(--text-primary)' }}>Not Available</option>
               </select>
 
               {record?.reason && (
