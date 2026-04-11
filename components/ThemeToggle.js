@@ -11,7 +11,7 @@ export function ThemeToggle() {
       style={{
         position: 'fixed',
         bottom: '24px',
-        right: '24px',
+        left: '24px',
         zIndex: 9999,
         background: 'var(--primary-600)',
         color: '#ffffff',
