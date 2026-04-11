@@ -53,17 +53,10 @@ export async function getServerRole() {
         };
       }
 
-      // User exists but no profile — create one with 'student'
-      await supabase.from('profiles').upsert({
-        id: user.id,
-        full_name: user.user_metadata?.full_name || user.email,
-        avatar_url: user.user_metadata?.avatar_url,
-        role: 'student',
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'id' });
-
+      // User exists but no profile — do NOT auto-assign 'student' here.
+      // We return the user object with role: null so the UI can decide what to show (e.g. login/role selection).
       return { 
-        role: 'student', 
+        role: null, 
         school_id: null,
         user: { 
           email: user.email, 

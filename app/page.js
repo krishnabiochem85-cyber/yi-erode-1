@@ -26,8 +26,8 @@ export default async function RootPage({ searchParams }) {
     if (user.email === ADMIN_EMAIL || user.email === 'krishna.biochem85@gmail.com') {
       redirect('/admin-dashboard');
     }
-    // New users default to the student dashboard
-    redirect('/student-dashboard');
+    // New users see the login/landing page first
+    redirect('/login');
   }
 
   if (role === 'admin') {
@@ -42,15 +42,6 @@ export default async function RootPage({ searchParams }) {
     redirect('/school-dashboard');
   }
 
-  if (role === 'student') {
-    redirect('/student-dashboard');
-  }
-
-  // Handle unassigned role (Legacy trigger users) - Default them to student features
-  if (role === 'unassigned') {
-    redirect('/student-dashboard');
-  }
-
-  // Fallback
+  // Everyone else (students, unassigned) goes to the login page first
   redirect('/login');
 }
