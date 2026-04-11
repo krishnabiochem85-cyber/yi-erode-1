@@ -12,7 +12,7 @@ export async function getAllMentorsWithAllocations() {
   // 1. Get all mentors
   const { data: mentors, error: mentorError } = await supabase
     .from('profiles')
-    .select('id, full_name, email, role')
+    .select('id, full_name, pseudo_name, role')
     .eq('role', 'mentor');
 
   if (mentorError) throw mentorError;

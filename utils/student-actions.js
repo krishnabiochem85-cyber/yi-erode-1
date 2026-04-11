@@ -22,7 +22,7 @@ export async function getStudentData() {
         id,
         full_name,
         avatar_url,
-        email
+        pseudo_name
       )
     `)
     .eq('id', auth.user.id)

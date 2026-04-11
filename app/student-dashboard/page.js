@@ -216,11 +216,11 @@ export default function StudentDashboard() {
                     className="card action-card"
                     style={{ textAlign: 'left', padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid var(--border-subtle)' }}
                   >
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary-glow)', display: 'flex', alignItems: 'center', justifyCenter: 'center', fontWeight: 700, color: 'var(--primary-400)', flexShrink: 0 }}>
-                      {mentor.full_name?.[0]}
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--primary-400)', flexShrink: 0 }}>
+                      {(mentor.pseudo_name || mentor.full_name || 'M')[0]}
                     </div>
                     <div style={{ flex: 1 }}>
-                       <div style={{ fontWeight: 600, fontSize: '14px' }}>{mentor.full_name}</div>
+                       <div style={{ fontWeight: 600, fontSize: '14px' }}>{mentor.pseudo_name || 'Anonymous Mentor'}</div>
                        <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Institutions Specialist</div>
                     </div>
                   </button>
@@ -241,12 +241,12 @@ export default function StudentDashboard() {
                 flexWrap: 'wrap'
               }}>
                 <img 
-                  src={data.mentor?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.mentor?.full_name || 'M')}&background=10b981&color=fff&bold=true`} 
+                  src={data.mentor?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.mentor?.pseudo_name || data.mentor?.full_name || 'M')}&background=10b981&color=fff&bold=true`} 
                   alt="Mentor Avatar"
                   style={{ width: '80px', height: '80px', borderRadius: '20px', objectFit: 'cover' }}
                 />
                 <div style={{ flex: 1, minWidth: '200px' }}>
-                  <h3 style={{ fontSize: '22px', fontWeight: 800 }}>{data.mentor?.full_name}</h3>
+                  <h3 style={{ fontSize: '22px', fontWeight: 800 }}>{data.mentor?.pseudo_name || 'Anonymous Mentor'}</h3>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>Your assigned JKKN mentor</p>
                   
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
