@@ -26,6 +26,7 @@ const adminNav = [
     section: 'Controls',
     items: [
       { href: '/admin-dashboard/notes', label: 'Admin Comms', icon: '💬' },
+      { href: '/admin-dashboard/bug-reports', label: 'Bug Reports', icon: '🐛' },
       { href: '/admin-dashboard/add-mentor', label: 'Onboard Mentor', icon: '➕' },
       { href: '/admin-dashboard/roles', label: 'Manage Roles', icon: '🔑' },
     ]

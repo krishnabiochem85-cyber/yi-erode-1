@@ -2,6 +2,7 @@ import "./globals.css";
 import { ThemeProvider } from "./ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import ProfileCompletionModal from "@/components/ProfileCompletionModal";
+import BugReportButton from "@/components/BugReportButton";
 
 export const metadata = {
   title: "Mission ON - Smart Choices — YI Erode Chapter",
@@ -22,6 +23,7 @@ export default function RootLayout({ children }) {
           {children}
           <ProfileCompletionModal />
           <ThemeToggle />
+          <BugReportButton />
         </ThemeProvider>
       </body>
     </html>
