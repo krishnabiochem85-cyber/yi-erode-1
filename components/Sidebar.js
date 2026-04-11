@@ -39,12 +39,6 @@ const mentorNav = [
       { href: '/mentor-dashboard', label: 'My Dashboard', icon: '📊' },
     ]
   },
-  {
-    section: 'Sessions',
-    items: [
-      { href: '/feedback', label: 'Submit Feedback', icon: '💬' },
-    ]
-  },
 ]
 
 const schoolNav = [

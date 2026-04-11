@@ -138,50 +138,99 @@ export async function submitInteraction(mentorId, schoolId, message) {
 }
 
 /**
- * Fetch feedback analytics for a specific mentor
+ * Fetch feedback logs entered by this mentor
  */
 export async function getMentorFeedbackStats(mentorId) {
   const supabase = await createClient();
   
-  // Get all session IDs for this mentor
-  const { data: sessionLinks, error: linkError } = await supabase
-    .from('session_mentors')
-    .select('session_id')
-    .eq('mentor_id', mentorId);
-
-  if (linkError || !sessionLinks) return [];
-  const sessionIds = sessionLinks.map(l => l.session_id);
-
-  // Get feedback for those sessions
-  const { data: feedback, error: feedError } = await supabase
-    .from('feedback')
-    .select(`
-      *,
-      sessions (
-        session_date,
-        schools ( name )
-      )
-    `)
-    .in('session_id', sessionIds)
+  const { data, error } = await supabase
+    .from('mentor_feedback_log')
+    .select('*')
+    .eq('mentor_id', mentorId)
     .order('created_at', { ascending: false });
 
-  if (feedError) return [];
+  if (error) {
+    console.error('Error fetching mentor feedback log:', error.message);
+    return [];
+  }
 
-  return feedback.map(f => ({
+  return data.map(f => ({
     id: f.id,
-    school: f.sessions?.schools?.name,
-    date: f.sessions?.session_date,
+    school: f.school_name,
+    date: f.session_date,
     comments: f.comments,
-    // Average rating across pillars for the summary card
-    rating: Math.round((
-      (f.rating_saying_no || 5) + 
-      (f.rating_boundaries || 5) + 
-      (f.rating_confidential_sharing || 5) + 
-      (f.rating_suicide_awareness || 5) + 
-      (f.rating_social_media || 5) + 
-      (f.rating_substance_abuse || 5)
-    ) / 6)
+    rating: f.rating
   }));
+}
+
+/**
+ * Submit a feedback entry logged by the mentor
+ */
+export async function submitMentorFeedback(mentorId, schoolName, rating, comments, sessionDate) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('mentor_feedback_log')
+    .insert([{
+      mentor_id: mentorId,
+      school_name: schoolName,
+      rating: parseInt(rating),
+      comments: comments || null,
+      session_date: sessionDate || null
+    }]);
+
+  if (error) {
+    console.error('Error submitting mentor feedback:', error.message);
+    return { success: false, error: error.message };
+  }
+
+  await logActivity('Logged Learner Feedback', `School: ${schoolName}, Rating: ${rating}/5`);
+  revalidatePath('/mentor-dashboard');
+  return { success: true };
+}
+
+/**
+ * Fetch mentor's own profile data
+ */
+export async function getMentorProfile(profileId) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, role, phone, course, college, pseudo_name, avatar_url')
+    .eq('id', profileId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching mentor profile:', error.message);
+    return null;
+  }
+  return data;
+}
+
+/**
+ * Update mentor profile (except pseudo_name)
+ */
+export async function updateMentorProfile(profileId, updates) {
+  const supabase = await createClient();
+  
+  // Never allow pseudo_name update from mentor
+  delete updates.pseudo_name;
+  delete updates.role;
+  delete updates.id;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', profileId);
+
+  if (error) {
+    console.error('Error updating mentor profile:', error.message);
+    return { success: false, error: error.message };
+  }
+
+  await logActivity('Updated Profile', 'Mentor updated their personal details.');
+  revalidatePath('/mentor-dashboard');
+  return { success: true };
 }
 
 /**

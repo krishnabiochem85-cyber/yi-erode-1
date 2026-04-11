@@ -1,4 +1,3 @@
-import Sidebar from "@/components/Sidebar";
 import { getServerRole } from '@/utils/auth-server';
 import { redirect } from 'next/navigation';
 
@@ -10,11 +9,8 @@ export default async function MentorDashboardLayout({ children }) {
   }
 
   return (
-    <div className="app-layout">
-      <Sidebar />
-      <main className="main-content">
-        {children}
-      </main>
-    </div>
+    <main style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+      {children}
+    </main>
   );
 }
