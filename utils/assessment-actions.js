@@ -36,9 +36,14 @@ export async function submitAssessment(formData) {
   try {
     const supabase = await createClient();
     const { user, school_id } = await getServerRole();
+    const grade = formData.metadata.grade;
 
     if (!school_id) {
       return { success: false, error: 'No school assigned to this account.' };
+    }
+
+    if (!grade) {
+      return { success: false, error: 'Grade is required for assessment.' };
     }
 
     const categoryA = calculateCategoryA(formData.countsA);
@@ -50,6 +55,7 @@ export async function submitAssessment(formData) {
       .from('assessments')
       .insert([{
         school_id: school_id,
+        grade: grade,
         category_a: categoryA,
         category_b: categoryB,
         module_code: moduleCode,
@@ -65,22 +71,20 @@ export async function submitAssessment(formData) {
 
     if (assessmentError) throw assessmentError;
 
-    // 2. Update the school summary info
-    const { error: schoolError } = await supabase
-      .from('schools')
-      .update({
+    // 2. Update the grade-specific status
+    const { error: gradeError } = await supabase
+      .from('school_grade_status')
+      .upsert({
+        school_id: school_id,
+        grade: grade,
         status: 'assessed',
         module_code: moduleCode,
-        grades: formData.metadata.grades || [],
-        // We can store total students if we want, but schema doesn't have a direct 'students' int field
-        // student_counts is jsonb
-        student_counts: { total: formData.metadata.totalStudents }
-      })
-      .eq('id', school_id);
+        last_assessment_id: assessment.id,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'school_id, grade' });
 
-    if (schoolError) throw schoolError;
+    if (gradeError) throw gradeError;
 
-    revalidatePath('/school-dashboard');
     return { 
       success: true, 
       moduleCode, 
@@ -99,13 +103,15 @@ export async function scheduleSession(scheduleData) {
     const { school_id } = await getServerRole();
 
     if (!school_id) throw new Error("No school linked to your account.");
+    if (!scheduleData.grade) throw new Error("Grade is required for scheduling.");
 
     // 1. Create the session
     const { error: sessionError } = await supabase
       .from('sessions')
       .insert([{
         school_id: school_id,
-        session_type: 'initial',
+        grade: scheduleData.grade,
+        session_type: scheduleData.type || 'initial',
         session_date: scheduleData.date,
         start_time: scheduleData.time,
         status: 'planned'
@@ -113,15 +119,15 @@ export async function scheduleSession(scheduleData) {
 
     if (sessionError) throw sessionError;
 
-    // 2. Update school status
-    const { error: schoolError } = await supabase
-      .from('schools')
+    // 2. Update grade status
+    const { error: gradeError } = await supabase
+      .from('school_grade_status')
       .update({ status: 'scheduled' })
-      .eq('id', school_id);
+      .eq('school_id', school_id)
+      .eq('grade', scheduleData.grade);
 
-    if (schoolError) throw schoolError;
+    if (gradeError) throw gradeError;
     
-    revalidatePath('/school-dashboard');
     return { success: true, message: 'Session successfully scheduled.' };
   } catch(error) {
     console.error('Scheduling Error:', error);

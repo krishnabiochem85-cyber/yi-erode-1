@@ -1,34 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getServerRole } from "@/utils/auth-server";
-import { getSchoolById, getSchoolSessions } from "@/utils/school-actions";
+import { getSchoolById, getSchoolSessions, getSchoolGradeStatuses } from "@/utils/school-actions";
 import Link from 'next/link';
 
 export default function SchoolDashboard() {
   const [user, setUser] = useState(null);
   const [school, setSchool] = useState(null);
+  const [gradeStatuses, setGradeStatuses] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     async function loadData() {
-      // Use internal API or server utility to get role and school_id
-      // For client components, we usually fetch from a route or pass as props, 
-      // but here we'll use a client-side fetch pattern for simplicity in this dev flow.
       const response = await fetch('/api/auth/me');
       const data = await response.json();
       
       setUser(data.user);
       
       if (data.school_id) {
-        const [schoolData, sessionsData] = await Promise.all([
+        const [schoolData, sessionsData, gradeData] = await Promise.all([
           getSchoolById(data.school_id),
-          getSchoolSessions(data.school_id)
+          getSchoolSessions(data.school_id),
+          getSchoolGradeStatuses(data.school_id)
         ]);
         setSchool(schoolData);
         setSessions(sessionsData);
+        setGradeStatuses(gradeData);
       }
       setLoading(false);
     }
@@ -64,9 +63,17 @@ export default function SchoolDashboard() {
 
   const greeting = currentTime.getHours() < 12 ? 'Good Morning' : currentTime.getHours() < 17 ? 'Good Afternoon' : 'Good Evening';
 
-  const upcomingSessions = sessions.filter(s => new Date(s.session_date) >= new Date());
-  const pastSessions = sessions.filter(s => new Date(s.session_date) < new Date());
-  const completionPercent = school.status === 'completed' ? 100 : school.status === 'scheduled' ? 66 : school.status === 'assessed' ? 33 : 0;
+  // Summarize overall school stats
+  const participatingGrades = school.grades || [];
+  const completedGrades = gradeStatuses.filter(gs => gs.status === 'completed').length;
+  const completionPercent = participatingGrades.length > 0 ? Math.round((completedGrades / participatingGrades.length) * 100) : 0;
+
+  const statusColors = {
+    registered: { color: 'var(--text-tertiary)', bg: 'var(--bg-glass)', label: 'Registered' },
+    assessed: { color: 'var(--accent-400)', bg: 'var(--accent-glow)', label: 'Assessed' },
+    scheduled: { color: 'var(--primary-400)', bg: 'var(--primary-glow)', label: 'Scheduled' },
+    completed: { color: 'var(--success-400)', bg: 'var(--success-bg)', label: 'Completed' },
+  };
 
   return (
     <div>
@@ -95,12 +102,12 @@ export default function SchoolDashboard() {
             {user?.name || 'School Coordinator'}
           </h1>
           <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
-            School dashboard for <strong style={{ color: 'var(--text-secondary)' }}>{school.name}</strong>
+            Managing <strong style={{ color: 'var(--text-secondary)' }}>{school.name}</strong>
           </p>
         </div>
       </div>
 
-      {/* School Info Card */}
+      {/* Grid: School Info + Global Progress */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: '2fr 1fr',
@@ -110,109 +117,134 @@ export default function SchoolDashboard() {
       }}>
         <div className="card" style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
           <div style={{
-            width: '72px', height: '72px', borderRadius: '18px',
-            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05))',
-            border: '1px solid rgba(245, 158, 11, 0.2)',
+            width: '64px', height: '64px', borderRadius: '16px',
+            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05))',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '2rem', flexShrink: 0
+            fontSize: '1.8rem', flexShrink: 0
           }}>🏫</div>
           <div style={{ flex: 1 }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px', letterSpacing: '-0.3px' }}>{school.name}</h2>
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>📍 {school.district}</span>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>📋 {school.board}</span>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>👤 {school.contact_person || 'No contact assigned'}</span>
+            <h2 style={{ fontSize: '17px', fontWeight: 700, marginBottom: '4px' }}>{school.name}</h2>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>📍 {school.district}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>📋 {school.board_type}</span>
             </div>
           </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              padding: '8px 18px', borderRadius: '10px',
-              background: 'var(--primary-glow)', border: '1px solid rgba(99, 102, 241, 0.2)',
-              fontWeight: 800, color: 'var(--primary-400)', fontSize: '16px', letterSpacing: '0.5px'
-            }}>
-              {school.module_code || 'TBD'}
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '4px', fontWeight: 500 }}>Assigned Module</div>
+          <div style={{ textAlign: 'right' }}>
+             <Link href={`/schools/${school.id}`} className="btn btn-sm btn-secondary">School Profile</Link>
           </div>
         </div>
 
-        {/* Progress Card */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Program Progress</div>
-          <div style={{ fontSize: '36px', fontWeight: 800, color: 'var(--success-400)', letterSpacing: '-1px', marginBottom: '8px' }}>{completionPercent}%</div>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${completionPercent}%`, background: 'linear-gradient(90deg, #10b981, #34d399)' }}></div>
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '8px' }}>
-             Current Status: <span style={{ color: 'var(--text-primary)', fontWeight: 600, textTransform: 'capitalize' }}>{school.status}</span>
+          <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>Program Coverage</div>
+          <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--success-400)', marginBottom: '6px' }}>{completionPercent}%</div>
+          <div className="progress-bar" style={{ height: '6px' }}>
+            <div className="progress-fill" style={{ width: `${completionPercent}%`, background: 'var(--success-400)' }}></div>
           </div>
         </div>
       </div>
 
-      <div className="content-grid">
-        {/* Next Step Card */}
-        <div className="card" style={{ animation: 'fadeInUp 0.5s ease-out 0.15s both' }}>
-          <div className="section-header">
-            <h2 className="section-title">🎯 Next Step</h2>
-          </div>
-          {school.status === 'registered' ? (
-            <div style={{ padding: '10px' }}>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
-                Your school is successfully registered. Please wait for the Mission ON Admin to assign an appropriate awareness module before scheduling can begin.
-              </p>
-            </div>
-          ) : school.status === 'assessed' ? (
-            <div style={{ padding: '10px' }}>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
-                 Module assignment complete! Your school has been assigned module <strong>{school.module_code}</strong>. Please coordinate with Admin to schedule your sessions.
-              </p>
-              <Link href="/schedule" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-                View Schedule →
-              </Link>
-            </div>
-          ) : (
-            <div style={{ padding: '10px' }}>
-                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
-                    Follow your active schedule and collect feedback after each session.
-                </p>
-                <Link href="/feedback" className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
-                    View Feedback Dashboard
-                </Link>
-            </div>
-          )}
-        </div>
+      <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '16px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span>🎓</span> Grade-Specific Workflow
+      </h3>
 
-        {/* Quick Actions */}
-        <div className="card" style={{ animation: 'fadeInUp 0.5s ease-out 0.2s both' }}>
-          <div className="section-header">
-            <h2 className="section-title">⚡ Quick Actions</h2>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {[
-              { icon: '📝', label: 'Update Proile', desc: 'Manage your contact info', color: 'var(--primary-400)' },
-              { icon: '📊', label: 'Learner Reports', desc: 'View feedback analytics', color: 'var(--success-400)' },
-              { icon: '📅', label: 'Class Schedule', desc: 'View session dates', color: 'var(--warning-400)' },
-              { icon: '💬', label: 'Support', desc: 'Contact admin team', color: 'var(--accent-400)' },
-            ].map((action) => (
-              <button key={action.label} style={{
-                display: 'flex', alignItems: 'center', gap: '14px',
-                padding: '14px 16px', borderRadius: 'var(--radius-md)',
-                background: 'var(--bg-glass)', border: '1px solid var(--border-subtle)',
-                cursor: 'pointer', textAlign: 'left', width: '100%',
-                transition: 'all 0.2s', color: 'inherit'
-              }}
-              onMouseOver={(e) => { e.currentTarget.style.background = 'var(--bg-glass-hover)'; e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
-              onMouseOut={(e) => { e.currentTarget.style.background = 'var(--bg-glass)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
-              >
-                <span style={{ fontSize: '20px' }}>{action.icon}</span>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', 
+        gap: '20px',
+        animation: 'fadeInUp 0.5s ease-out 0.2s both'
+      }}>
+        {participatingGrades.map((grade) => {
+          const statusEntry = gradeStatuses.find(gs => gs.grade === grade.toString()) || { status: 'registered' };
+          const step = statusEntry.status;
+          const config = statusColors[step];
+
+          return (
+            <div key={grade} className="card" style={{ borderLeft: `4px solid ${config.color}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)', marginBottom: '2px' }}>{action.label}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{action.desc}</div>
+                  <h4 style={{ fontSize: '20px', fontWeight: 800, margin: 0 }}>Grade {grade}</h4>
+                  <div style={{ 
+                    fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px',
+                    color: config.color, background: config.bg, display: 'inline-block', marginTop: '4px'
+                  }}>
+                    {config.label}
+                  </div>
                 </div>
-              </button>
-            ))}
-          </div>
-        </div>
+                {statusEntry.module_code && (
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Module</div>
+                    <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--accent-400)' }}>{statusEntry.module_code}</div>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ padding: '12px', background: 'var(--bg-glass)', borderRadius: '12px', marginBottom: '16px' }}>
+                {step === 'registered' ? (
+                  <>
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                      Baseline assessment pending for Grade {grade}.
+                    </p>
+                    <Link href={`/assessments/new?grade=${grade}`} className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center' }}>
+                      Start Assessment
+                    </Link>
+                  </>
+                ) : step === 'assessed' ? (
+                  <>
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                      Assessment complete! Please schedule the live session.
+                    </p>
+                    <Link href={`/schedule?grade=${grade}`} className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center' }}>
+                      Schedule Session 1
+                    </Link>
+                  </>
+                ) : step === 'scheduled' ? (
+                  <>
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                       Session is planned. Update details on session day.
+                    </p>
+                    <Link href="/schedule" className="btn btn-secondary btn-sm" style={{ width: '100%', justifyContent: 'center' }}>
+                      View Session Pulse
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                      Session 1 complete. Fill feedback to unlock Session 2.
+                    </p>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                       <Link href="/feedback" className="btn btn-secondary btn-sm" style={{ flex: 1, justifyContent: 'center' }}>Feedback</Link>
+                       <Link href="/schedule" className="btn btn-primary btn-sm" style={{ flex: 1, justifyContent: 'center' }}>Session 2</Link>
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              {/* Mini Pipeline Indicator */}
+              <div style={{ display: 'flex', gap: '4px', height: '4px' }}>
+                 <div style={{ flex: 1, background: step !== 'registered' ? 'var(--success-400)' : 'var(--border-subtle)', borderRadius: '2px' }} />
+                 <div style={{ flex: 1, background: ['scheduled', 'completed'].includes(step) ? 'var(--success-400)' : 'var(--border-subtle)', borderRadius: '2px' }} />
+                 <div style={{ flex: 1, background: step === 'completed' ? 'var(--success-400)' : 'var(--border-subtle)', borderRadius: '2px' }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Quick Actions at bottom */}
+      <div style={{ marginTop: '32px', display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
+         {[
+           { label: 'Learner Reports', icon: '📊', color: 'var(--success-400)' },
+           { label: 'Upcoming Sessions', icon: '📅', color: 'var(--primary-400)' },
+           { label: 'Support Desk', icon: '💬', color: 'var(--accent-400)' },
+         ].map(action => (
+           <button key={action.label} style={{
+             flex: '0 0 160px', padding: '16px', borderRadius: '14px', background: 'var(--bg-glass)',
+             border: '1px solid var(--border-subtle)', textAlign: 'left', cursor: 'pointer'
+           }}>
+             <div style={{ fontSize: '20px', marginBottom: '8px' }}>{action.icon}</div>
+             <div style={{ fontWeight: 600, fontSize: '13px' }}>{action.label}</div>
+           </button>
+         ))}
       </div>
     </div>
   );

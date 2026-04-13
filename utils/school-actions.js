@@ -121,3 +121,113 @@ export async function getSchoolSessions(schoolId) {
   }
   return data;
 }
+/**
+ * Fetch status for all participating grades in a school
+ */
+export async function getSchoolGradeStatuses(schoolId) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('school_grade_status')
+    .select('*')
+    .eq('school_id', schoolId);
+  
+  if (error) {
+    console.error('Error fetching grade statuses:', error.message);
+    return [];
+  }
+  return data;
+}
+
+/**
+ * Initialize status for a new grade
+ */
+export async function initializeGradeStatus(schoolId, grade) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('school_grade_status')
+    .insert([{ school_id: schoolId, grade, status: 'registered' }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error initializing grade status:', error.message);
+    return { success: false, error: error.message };
+  }
+  
+  revalidatePath('/school-dashboard');
+  return { success: true, data };
+}
+
+/**
+ * Update session details with trainer, mentors, learners, and attachments
+ */
+export async function updateSessionPulse(sessionId, updateData) {
+  const supabase = await createClient();
+  
+  const { error } = await supabase
+    .from('sessions')
+    .update({
+      trainer_name: updateData.trainer_name,
+      mentor_aliases: updateData.mentor_aliases,
+      learner_count: updateData.learner_count,
+      learner_details: updateData.learner_details,
+      attachment_urls: updateData.attachment_urls,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', sessionId);
+
+  if (error) {
+    console.error('Error updating session pulse:', error.message);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/schedule');
+  return { success: true };
+}
+
+/**
+ * Submit Principal Feedback for a session
+ */
+export async function submitPrincipalFeedback(sessionId, feedback) {
+  const supabase = await createClient();
+  
+  const { error } = await supabase
+    .from('sessions')
+    .update({
+      principal_feedback: feedback,
+      status: 'completed'
+    })
+    .eq('id', sessionId);
+
+  if (error) {
+    console.error('Error submitting principal feedback:', error.message);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/schedule');
+  return { success: true };
+}
+
+/**
+ * Submit Post-Intervention Feedback / Impact
+ */
+export async function submitImpactAssessment(sessionId, impactData) {
+  const supabase = await createClient();
+  
+  const { error } = await supabase
+    .from('sessions')
+    .update({
+      post_intervention_feedback_1: impactData.feedback_1,
+      post_intervention_feedback_2: impactData.feedback_2,
+      impact_summary: impactData.summary
+    })
+    .eq('id', sessionId);
+
+  if (error) {
+    console.error('Error submitting impact:', error.message);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/schedule');
+  return { success: true };
+}
