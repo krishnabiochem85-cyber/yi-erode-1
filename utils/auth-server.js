@@ -18,10 +18,11 @@ export async function getServerRole() {
       // User is logged in via Google — check their profile role
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role, school_id')
+        .select('role, school_id, full_name')
         .eq('id', user.id)
         .single();
 
+      // Priority 1: Use the role from the database if it exists
       if (profile && profile.role) {
         return { 
           role: profile.role, 
@@ -35,26 +36,26 @@ export async function getServerRole() {
         };
       }
 
-      // No profile yet — auto-assign admin for designated emails
+      // Priority 2: Auto-assign admin for designated emails if profile is missing or has no role
       if (user.email === ADMIN_EMAIL || user.email === 'krishna.biochem85@gmail.com') {
-        // Try to upsert profile with admin role
-        await supabase.from('profiles').upsert({
+        const adminProfile = {
           id: user.id,
           full_name: user.user_metadata?.full_name || 'Admin',
           avatar_url: user.user_metadata?.avatar_url,
           role: 'admin',
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'id' });
+        };
+
+        await supabase.from('profiles').upsert(adminProfile, { onConflict: 'id' });
 
         return { 
           role: 'admin', 
           school_id: null,
-          user: { email: user.email, name: user.user_metadata?.full_name, id: user.id, avatar: user.user_metadata?.avatar_url } 
+          user: { email: user.email, name: adminProfile.full_name, id: user.id, avatar: user.id.avatar_url } 
         };
       }
 
-      // User exists but no profile — do NOT auto-assign 'student' here.
-      // We return the user object with role: null so the UI can decide what to show (e.g. login/role selection).
+      // Priority 3: User exists but no profile or role found (e.g. new registration)
       return { 
         role: null, 
         school_id: null,
@@ -67,10 +68,10 @@ export async function getServerRole() {
       };
     }
   } catch (e) {
-    // Supabase not available — fall through to dev mode
+    console.error("Supabase server session check failed:", e);
   }
 
-  // 2. Fallback: Check dev cookie
+  // 2. Fallback ONLY if no Supabase user is logged in
   const devRole = cookieStore.get('dev_role');
   if (devRole) {
     const devUser = cookieStore.get('dev_user');

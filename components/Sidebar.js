@@ -87,7 +87,7 @@ export default function Sidebar() {
   }, [pathname])
 
   useEffect(() => {
-    // Check Supabase first, then dev cookies
+    // Check Supabase first
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data: { user: sbUser } }) => {
       if (sbUser) {
@@ -96,14 +96,22 @@ export default function Sidebar() {
           .select('role')
           .eq('id', sbUser.id)
           .single();
+        
+        // If logged in via Supabase, we strictly use the DB role or default to unassigned.
+        // We do NOT fall back to dev cookies here.
         setRole(profile?.role || 'unassigned');
-        setUser({ name: sbUser.user_metadata?.full_name, email: sbUser.email, avatar: sbUser.user_metadata?.avatar_url });
+        setUser({ 
+          name: sbUser.user_metadata?.full_name, 
+          email: sbUser.email, 
+          avatar: sbUser.user_metadata?.avatar_url 
+        });
       } else {
-        // Fallback to dev cookies
+        // Fallback to dev cookies ONLY if no Supabase user is logged in
         setRole(getDevRole());
         setUser(getDevUser());
       }
     }).catch(() => {
+      // General error fallback
       setRole(getDevRole());
       setUser(getDevUser());
     });
