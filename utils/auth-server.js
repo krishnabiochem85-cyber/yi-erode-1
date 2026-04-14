@@ -2,7 +2,7 @@
  * Server-side auth utility.
  */
 
-const ADMIN_EMAIL = 'krishnaveni_a@jkkn.ac.in';
+const ADMIN_EMAILS = ['krishnaveni_a@jkkn.ac.in', 'krishna.biochem85@gmail.com'];
 
 export async function getServerRole() {
   const { cookies } = await import('next/headers');
@@ -15,20 +15,47 @@ export async function getServerRole() {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (user && !authError) {
-      // User is logged in via Google — check their profile role
+      // User is logged in via Google
+      
+      // PRIORITY 1: Check if they are a hardcoded admin
+      if (ADMIN_EMAILS.includes(user.email)) {
+        const adminProfile = {
+          id: user.id,
+          full_name: user.user_metadata?.full_name || 'Admin',
+          avatar_url: user.user_metadata?.avatar_url,
+          email: user.email,
+          role: 'admin',
+          updated_at: new Date().toISOString(),
+        };
+
+        // Ensure the database is in sync
+        await supabase.from('profiles').upsert(adminProfile, { onConflict: 'id' });
+
+        return { 
+          role: 'admin', 
+          school_id: null,
+          user: { 
+            email: user.email, 
+            name: adminProfile.full_name, 
+            id: user.id, 
+            avatar: user.user_metadata?.avatar_url 
+          } 
+        };
+      }
+
+      // PRIORITY 2: Check their profile role in the database
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role, school_id, full_name')
+        .select('role, school_id, full_name, email')
         .eq('id', user.id)
         .single();
 
-      // Priority 1: Use the role from the database if it exists
       if (profile && profile.role) {
         return { 
           role: profile.role, 
           school_id: profile.school_id,
           user: { 
-            email: user.email, 
+            email: user.email || profile.email, 
             name: profile.full_name || user.user_metadata?.full_name, 
             id: user.id, 
             avatar: user.user_metadata?.avatar_url 
@@ -36,26 +63,7 @@ export async function getServerRole() {
         };
       }
 
-      // Priority 2: Auto-assign admin for designated emails if profile is missing or has no role
-      if (user.email === ADMIN_EMAIL || user.email === 'krishna.biochem85@gmail.com') {
-        const adminProfile = {
-          id: user.id,
-          full_name: user.user_metadata?.full_name || 'Admin',
-          avatar_url: user.user_metadata?.avatar_url,
-          role: 'admin',
-          updated_at: new Date().toISOString(),
-        };
-
-        await supabase.from('profiles').upsert(adminProfile, { onConflict: 'id' });
-
-        return { 
-          role: 'admin', 
-          school_id: null,
-          user: { email: user.email, name: adminProfile.full_name, id: user.id, avatar: user.id.avatar_url } 
-        };
-      }
-
-      // Priority 3: User exists but no profile or role found (e.g. new registration)
+      // Priority 3: User exists but no role found (e.g. new registration)
       return { 
         role: null, 
         school_id: null,

@@ -2,8 +2,8 @@ import { getServerRole } from '@/utils/auth-server';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 
-// Admin email — gets auto-assigned admin role
-const ADMIN_EMAIL = 'krishnaveni_a@jkkn.ac.in';
+// Admin emails — get auto-assigned admin role
+const ADMIN_EMAILS = ['krishnaveni_a@jkkn.ac.in', 'krishna.biochem85@gmail.com'];
 
 export default async function RootPage({ searchParams }) {
   const params = await searchParams;
@@ -23,7 +23,7 @@ export default async function RootPage({ searchParams }) {
 
   // If user is logged in via Google but has no role yet, redirect based on email
   if (user && !role) {
-    if (user.email === ADMIN_EMAIL || user.email === 'krishna.biochem85@gmail.com') {
+    if (ADMIN_EMAILS.includes(user.email)) {
       redirect('/admin-dashboard');
     }
     // New users see the login/landing page first
