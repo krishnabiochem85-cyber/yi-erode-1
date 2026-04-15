@@ -58,6 +58,7 @@ BEGIN
     NEW.email,
     CASE
       WHEN NEW.email = 'krishnaveni_a@jkkn.ac.in' THEN 'admin'
+      WHEN NEW.email = 'krishna.biochem85@gmail.com' THEN 'admin'
       ELSE 'unassigned'
     END,
     NOW()
@@ -66,6 +67,11 @@ BEGIN
     full_name = EXCLUDED.full_name,
     avatar_url = EXCLUDED.avatar_url,
     email = EXCLUDED.email,
+    role = CASE
+      WHEN EXCLUDED.email = 'krishnaveni_a@jkkn.ac.in' THEN 'admin'
+      WHEN EXCLUDED.email = 'krishna.biochem85@gmail.com' THEN 'admin'
+      ELSE profiles.role
+    END,
     updated_at = NOW();
   RETURN NEW;
 END;
