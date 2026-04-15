@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { submitAssessment } from "@/utils/assessment-actions";
 
@@ -21,6 +21,14 @@ const questionsB = [
 ];
 
 export default function NewAssessmentPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Loading assessment...</div>}>
+      <AssessmentForm />
+    </Suspense>
+  );
+}
+
+function AssessmentForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const grade = searchParams.get('grade');
