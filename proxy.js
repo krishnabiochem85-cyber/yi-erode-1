@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 
-export async function middleware(request) {
-  // Try to refresh Supabase session, but don't block if it fails
+export async function proxy(request) {
   try {
     const { updateSession } = await import('@/utils/supabase/middleware');
     return await updateSession(request);
